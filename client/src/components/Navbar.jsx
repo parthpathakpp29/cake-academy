@@ -10,6 +10,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ModeToggle } from "./mode-toggle"
+import Logo from '../assets/logo3.png'
+
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = React.useState(false)
@@ -23,8 +25,7 @@ export default function Navbar() {
         >
             <nav className="container flex items-center justify-between p-4">
                 <Link to="/" className="flex items-center space-x-2">
-                    <ChefHat className="h-6 w-6" />
-                    <span className="text-xl font-bold">BakeryEdu</span>
+                    <img src={Logo} alt="Logo" className="h1 w-20" />
                 </Link>
 
                 {/* Desktop Navigation */}

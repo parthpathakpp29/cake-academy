@@ -56,7 +56,7 @@ export default function Hero() {
     }, [isAutoPlaying, nextSlide])
 
     return (
-        <section className="relative h-[80vh] min-h-[600px] w-full overflow-hidden">
+        <section className="relative h-[80vh] min-h-[560px] w-full overflow-hidden">
             <AnimatePresence initial={false} mode="wait">
                 <motion.div
                     key={currentSlide}
