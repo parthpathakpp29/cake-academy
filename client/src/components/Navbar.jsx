@@ -11,10 +11,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ModeToggle } from "./mode-toggle"
 import Logo from '../assets/logo3.png'
+import { useAuth } from "@/context/AuthContext"
+import Profile from "./Profile"
 
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = React.useState(false)
+    const { user, logout } = useAuth();
 
     return (
         <motion.header
@@ -36,24 +39,23 @@ export default function Navbar() {
                     >
                         Courses
                     </Link>
-                    {/* <Link
-                        to="/about"
-                        className="text-sm font-medium hover:text-primary transition-colors"
-                    >
-                        About
-                    </Link> */}
-                    {/* <Link
-                        to="/contact"
-                        className="text-sm font-medium hover:text-primary transition-colors"
-                    >
-                        Contact
-                    </Link> */}
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link to="/signin">Sign In</Link>
-                    </Button>
-                    <Button size="sm" asChild>
-                        <Link to="/signup">Sign Up</Link>
-                    </Button>
+                    {user ? (
+                        <>
+                            <Profile />
+                        </>
+                    ) : (
+                        <>
+                            <Button variant="ghost" size="sm" asChild>
+                                <Link to="/sign-in">Sign In</Link>
+                            </Button>
+                            <Button size="sm" asChild>
+                                <Link to="/sign-up">Sign Up</Link>
+                            </Button>
+                        </>
+                    )
+
+                    }
+
 
                     <ModeToggle />
                 </div>
@@ -76,26 +78,22 @@ export default function Navbar() {
                                     Courses
                                 </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link to="/about" className="w-full">
-                                    About
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link to="/contact" className="w-full">
-                                    Contact
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link to="/signin" className="w-full">
-                                    Sign In
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link to="/signup" className="w-full">
-                                    Sign Up
-                                </Link>
-                            </DropdownMenuItem>
+
+                            {user ? (
+                                <>
+                                    <Profile />
+                                </>
+                            ) : (
+                                <>
+                                    <DropdownMenuItem asChild>
+                                        <Link to="/sign-in" className="w-full">Sign In</Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link to="/sign-up" className="w-full">Sign Up</Link>
+                                    </DropdownMenuItem>
+                                </>
+                            )}
+
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
