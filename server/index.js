@@ -8,11 +8,15 @@ dotenv.config();
 
 const app = express();
 
-app.use(express.json({ limit: '10mb' }));
+// Update CORS configuration
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : '*'
+    origin: process.env.NODE_ENV === 'production'
+        ? ['https://cake-making-qoy7.vercel.app', 'https://cake-making.vercel.app']
+        : '*',
+    credentials: true
 }));
 
+app.use(express.json({ limit: '10mb' }));
 app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
@@ -34,5 +38,4 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
-// Export the Express API
 export default app;
