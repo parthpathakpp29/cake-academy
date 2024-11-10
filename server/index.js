@@ -8,15 +8,26 @@ dotenv.config();
 
 const app = express();
 
-// Update CORS configuration
+const allowedOrigins = ['https://cake-making-qoy7.vercel.app', 'https://cake-making.vercel.app'];
+
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? ['https://cake-making-qoy7.vercel.app', 'https://cake-making.vercel.app']
-        : '*',
-    credentials: true
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: '10mb' }));
+
+// Pre-flight request handling
+app.options('*', cors());
+
 app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
