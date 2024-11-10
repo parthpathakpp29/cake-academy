@@ -26,7 +26,12 @@ export default function SignIn() {
 
     useEffect(() => {
         if (user) {
-            navigate('/dashboard', { replace: true })
+            // Redirect based on user role
+            if (user.role === 1) {
+                navigate('/admin/dashboard', { replace: true })
+            } else {
+                navigate('/dashboard', { replace: true })
+            }
         }
     }, [user, navigate])
 
@@ -48,7 +53,12 @@ export default function SignIn() {
             if (response.success) {
                 login(response.user, response.token)
                 toast.success('Signed in successfully')
-                navigate('/dashboard')
+                // Redirect based on user role
+                if (response.user.role === 1) {
+                    navigate('/admin/dashboard')
+                } else {
+                    navigate('/dashboard')
+                }
             } else {
                 toast.error(response.message || 'Sign in failed')
             }

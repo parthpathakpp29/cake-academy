@@ -39,6 +39,10 @@ export default function Profile() {
             .toUpperCase() || 'U';
     };
 
+    const getDashboardLink = () => {
+        return user?.role === 1 ? '/admin/dashboard' : '/dashboard';
+    };
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -81,11 +85,11 @@ export default function Profile() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                     <Link
-                        to="/dashboard"
+                        to={getDashboardLink()}
                         className="flex items-center space-x-2 rounded-md"
                     >
                         <LayoutDashboard className="w-4 h-4" />
-                        <span>Dashboard</span>
+                        <span>{user?.role === 1 ? 'Admin Dashboard' : 'Dashboard'}</span>
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

@@ -12,7 +12,9 @@ import SignUp from './pages/auth/SignUp';
 import { AuthProvider } from './context/AuthContext';
 import { Toaster } from 'sonner';
 import Dashboard from './pages/user/Dashboard';
-import ProtectedRoute from './Routes/Protected-route';
+import ProtectedRoute from './components/Routes/Protected-route';
+import AdminRoute from './components/Routes/Admin-Route';
+import AdminDashboard from './pages/user/Admin/AdminDashboard';
 
 
 const HomeLayout = () => {
@@ -40,7 +42,10 @@ function App() {
               <Route path="/sign-up" element={<SignUp />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+              </Route>
 
+              <Route element={<AdminRoute />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
               </Route>
 
               {/* Catch-all redirect */}
