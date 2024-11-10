@@ -6,24 +6,33 @@ import authRoutes from './routes/authRoute.js'
 
 dotenv.config();
 
-connectDB()
-
 const app = express();
 
 app.use(express.json({ limit: '10mb' }));
 app.use(cors({
-    origin: '*'
+    origin: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : '*'
 }));
 
 app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
     return res.json("Hello Backend");
-})
+});
 
+// Connect to the database
+connectDB().then(() => {
+    console.log('Connected to database');
+}).catch((err) => {
+    console.error('Failed to connect to database:', err);
+});
 
-const PORT = process.env.PORT;
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 8080;
+    app.listen(PORT, () => {
+        console.log(`Server Running at PORT ${PORT}`);
+    });
+}
 
-app.listen(PORT, () => {
-    console.log(`Server Running at PORT ${PORT}`);
-})
+// Export the Express API
+export default app;
