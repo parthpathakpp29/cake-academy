@@ -8,7 +8,7 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = ['https://cake-making-qoy7.vercel.app', 'https://cake-making.vercel.app'];
+const allowedOrigins = ['https://cake-making-xrda.vercel.app'];
 
 app.use(cors({
     origin: function (origin, callback) {
@@ -41,12 +41,9 @@ connectDB().then(() => {
     console.error('Failed to connect to database:', err);
 });
 
-// For local development
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 8080;
-    app.listen(PORT, () => {
-        console.log(`Server Running at PORT ${PORT}`);
-    });
-}
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+    console.log(`Server Running at PORT ${PORT}`);
+});
 
 export default app;
