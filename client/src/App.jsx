@@ -15,6 +15,8 @@ import Dashboard from './pages/user/Dashboard';
 import ProtectedRoute from './components/Routes/Protected-route';
 import AdminRoute from './components/Routes/Admin-Route';
 import AdminDashboard from './pages/user/Admin/AdminDashboard';
+import CreateCourse from './pages/user/Admin/CreateNewCourse';
+
 
 
 const HomeLayout = () => {
@@ -46,6 +48,7 @@ function App() {
 
               <Route element={<AdminRoute />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/courses/create" element={<CreateCourse />} />
               </Route>
 
               {/* Catch-all redirect */}
