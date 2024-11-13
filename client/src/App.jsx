@@ -16,6 +16,8 @@ import ProtectedRoute from './components/Routes/Protected-route';
 import AdminRoute from './components/Routes/Admin-Route';
 import AdminDashboard from './pages/user/Admin/AdminDashboard';
 import CreateCourse from './pages/user/Admin/CreateNewCourse';
+import AllCourses from './pages/courses/AllCourses';
+import CourseDetails from './pages/courses/CourseDetails';
 
 
 
@@ -42,6 +44,8 @@ function App() {
               <Route path="/" element={<HomeLayout />} />
               <Route path="/sign-in" element={<SignIn />} />
               <Route path="/sign-up" element={<SignUp />} />
+              <Route path="/courses" element={<AllCourses />} />
+              <Route path='/courses/:id' element={<CourseDetails />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
               </Route>

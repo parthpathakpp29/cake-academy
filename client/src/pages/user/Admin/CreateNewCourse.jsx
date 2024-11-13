@@ -1,30 +1,29 @@
-'use client'
-
 import * as React from "react"
-import { useForm, useFieldArray, Controller } from "react-hook-form"
+import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import {
-    Card,
-    CardContent,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, Plus, X, Image as ImageIcon } from "lucide-react"
+import { Upload, Plus, X, Image as ImageIcon, Loader2 } from "lucide-react"
 import {
+    Form,
     FormField,
     FormItem,
     FormLabel,
     FormControl,
-    FormDescription,
     FormMessage,
-    Form,
 } from "@/components/ui/form"
 import { courseSchema } from "@/utils/validations"
+import { courseService } from "@/services/api"
 
 export default function CreateCourse() {
+    const navigate = useNavigate()
+    const [isSubmitting, setIsSubmitting] = React.useState(false)
+
     const form = useForm({
         resolver: zodResolver(courseSchema),
         defaultValues: {
@@ -41,16 +40,63 @@ export default function CreateCourse() {
         name: "lectures",
     })
 
-    const onSubmit = (data) => {
-        console.log(data)
-        // Handle form submission
+    const onSubmit = async (data) => {
+        try {
+            if (!data.thumbnail) {
+                toast.error("Course thumbnail is required");
+                return;
+            }
+
+            setIsSubmitting(true)
+            const formData = new FormData()
+
+            // Append basic course data
+            formData.append('title', data.title)
+            formData.append('description', data.description)
+            formData.append('price', data.price.toString())
+
+            // Append thumbnail - match the backend field name
+            if (data.thumbnail instanceof File) {
+                formData.append('thumbnail', data.thumbnail)
+            }
+
+            // Append lectures
+            data.lectures.forEach((lecture, index) => {
+                if (lecture.video instanceof File) {
+                    formData.append('video', lecture.video)
+                    formData.append(`lectureTitles[]`, lecture.title)
+                }
+            })
+
+            await courseService.createCourse(formData)
+            toast.success("Course created successfully")
+            navigate("/admin/courses")
+        } catch (error) {
+            console.error("Error creating course:", error)
+            toast.error(error.message || "Failed to create course")
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (
         <div className="container mx-auto px-4 py-8 max-w-5xl">
             <div className="flex items-center justify-between mb-8">
                 <h1 className="text-3xl font-bold">Create a new course</h1>
-                <Button type="submit" form="course-form">Submit</Button>
+                <Button
+                    type="submit"
+                    form="course-form"
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating...
+                        </>
+                    ) : (
+                        'Submit'
+                    )}
+                </Button>
             </div>
 
             <Form {...form}>
@@ -62,13 +108,13 @@ export default function CreateCourse() {
                         </TabsList>
 
                         <TabsContent value="landing">
-                            <Card className="border rounded-lg shadow-sm">
+                            <Card>
                                 <CardContent className="p-6">
                                     <div className="space-y-4">
                                         <FormField
                                             control={form.control}
                                             name="thumbnail"
-                                            render={({ field }) => (
+                                            render={({ field: { value, onChange, ...field } }) => (
                                                 <FormItem>
                                                     <FormLabel>Course Thumbnail</FormLabel>
                                                     <FormControl>
@@ -76,10 +122,10 @@ export default function CreateCourse() {
                                                             className="border-2 border-dashed rounded-lg p-4 hover:border-gray-400 transition-colors cursor-pointer"
                                                             onClick={() => document.getElementById('thumbnail').click()}
                                                         >
-                                                            {field.value ? (
+                                                            {value ? (
                                                                 <div className="relative">
                                                                     <img
-                                                                        src={URL.createObjectURL(field.value)}
+                                                                        src={URL.createObjectURL(value)}
                                                                         alt="Course thumbnail"
                                                                         className="w-full h-48 object-cover rounded-lg"
                                                                     />
@@ -90,7 +136,7 @@ export default function CreateCourse() {
                                                                         className="absolute bottom-2 right-2"
                                                                         onClick={(e) => {
                                                                             e.stopPropagation()
-                                                                            field.onChange(null)
+                                                                            onChange(null)
                                                                         }}
                                                                     >
                                                                         <X className="h-4 w-4 mr-1" />
@@ -109,7 +155,13 @@ export default function CreateCourse() {
                                                                 type="file"
                                                                 accept="image/*"
                                                                 className="hidden"
-                                                                onChange={(e) => field.onChange(e.target.files[0])}
+                                                                onChange={(e) => {
+                                                                    const file = e.target.files?.[0]
+                                                                    if (file) {
+                                                                        onChange(file)
+                                                                    }
+                                                                }}
+                                                                {...field}
                                                             />
                                                         </div>
                                                     </FormControl>
@@ -177,7 +229,7 @@ export default function CreateCourse() {
                         </TabsContent>
 
                         <TabsContent value="curriculum">
-                            <Card className="border rounded-lg shadow-sm">
+                            <Card>
                                 <CardContent className="p-6">
                                     <div className="space-y-8">
                                         {fields.map((field, index) => (
@@ -213,7 +265,7 @@ export default function CreateCourse() {
                                                     <FormField
                                                         control={form.control}
                                                         name={`lectures.${index}.video`}
-                                                        render={({ field }) => (
+                                                        render={({ field: { value, onChange, ...field } }) => (
                                                             <FormItem>
                                                                 <FormLabel>Video</FormLabel>
                                                                 <FormControl>
@@ -231,11 +283,17 @@ export default function CreateCourse() {
                                                                             type="file"
                                                                             accept="video/*"
                                                                             className="hidden"
-                                                                            onChange={(e) => field.onChange(e.target.files[0])}
+                                                                            onChange={(e) => {
+                                                                                const file = e.target.files?.[0]
+                                                                                if (file) {
+                                                                                    onChange(file)
+                                                                                }
+                                                                            }}
+                                                                            {...field}
                                                                         />
-                                                                        {field.value && (
+                                                                        {value && (
                                                                             <span className="text-sm text-gray-500">
-                                                                                {field.value.name}
+                                                                                {value.name}
                                                                             </span>
                                                                         )}
                                                                     </div>
