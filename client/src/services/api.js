@@ -81,7 +81,6 @@ export const courseService = {
         }
     },
 
-
     async getAllCourses() {
         try {
             const response = await api.get('/courses/get-courses');
@@ -106,6 +105,35 @@ export const courseService = {
             return response.data;
         } catch (error) {
             throw error.response ? error.response.data : new Error('Failed to delete course');
+        }
+    }
+};
+
+export const paymentService = {
+    async createOrder(courseId) {
+        try {
+            const response = await api.post('/payment/create-order', { courseId });
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : new Error('Failed to create order');
+        }
+    },
+
+    async verifyPayment(paymentData) {
+        try {
+            const response = await api.post('/payment/verify-payment', paymentData);
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : new Error('Failed to verify payment');
+        }
+    },
+
+    async getEnrolledCourses() {
+        try {
+            const response = await api.get('/payment/enrolled-courses');
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : new Error('Failed to fetch enrolled courses');
         }
     }
 };

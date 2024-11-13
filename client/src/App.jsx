@@ -18,8 +18,7 @@ import AdminDashboard from './pages/user/Admin/AdminDashboard';
 import CreateCourse from './pages/user/Admin/CreateNewCourse';
 import AllCourses from './pages/courses/AllCourses';
 import CourseDetails from './pages/courses/CourseDetails';
-
-
+import VideoPlayerPage from './pages/courses/VideoPlayerPage';
 
 const HomeLayout = () => {
   return (
@@ -45,7 +44,9 @@ function App() {
               <Route path="/sign-in" element={<SignIn />} />
               <Route path="/sign-up" element={<SignUp />} />
               <Route path="/courses" element={<AllCourses />} />
-              <Route path='/courses/:id' element={<CourseDetails />} />
+              <Route path="/courses/:id" element={<CourseDetails />} />
+              <Route path="/courses/:courseId/lecture/:lectureIndex" element={<VideoPlayerPage />} />
+              
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
               </Route>
