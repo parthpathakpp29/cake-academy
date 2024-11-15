@@ -19,6 +19,9 @@ import CreateCourse from './pages/user/Admin/CreateNewCourse';
 import AllCourses from './pages/courses/AllCourses';
 import CourseDetails from './pages/courses/CourseDetails';
 import VideoPlayerPage from './pages/courses/VideoPlayerPage';
+import EditCourse from './pages/user/Admin/EditCourse';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
 
 const HomeLayout = () => {
   return (
@@ -43,17 +46,20 @@ function App() {
               <Route path="/" element={<HomeLayout />} />
               <Route path="/sign-in" element={<SignIn />} />
               <Route path="/sign-up" element={<SignUp />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+<Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/courses" element={<AllCourses />} />
               <Route path="/courses/:id" element={<CourseDetails />} />
-              <Route path="/courses/:courseId/lecture/:lectureIndex" element={<VideoPlayerPage />} />
               
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/courses/:courseId/lecture/:lectureIndex" element={<VideoPlayerPage />} />
               </Route>
 
               <Route element={<AdminRoute />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/admin/courses/create" element={<CreateCourse />} />
+                <Route path="/admin/courses/:id/edit" element={<EditCourse />} />
               </Route>
 
               {/* Catch-all redirect */}

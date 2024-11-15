@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from "@/components/ui/button"
@@ -13,25 +12,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Separator } from "@/components/ui/separator"
 import { authService } from '@/services/api'
 import { useAuth } from '@/context/AuthContext'
-
-const loginSchema = z.object({
-    email: z.string().email('Invalid email address'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-})
+import { loginSchema } from '@/utils/validations'
+import { PasswordInput } from '@/components/PasswordInput'
 
 export default function SignIn() {
-    const [showPassword, setShowPassword] = useState(false)
     const navigate = useNavigate()
     const { user, login } = useAuth()
 
     useEffect(() => {
         if (user) {
-            // Redirect based on user role
-            if (user.role === 1) {
-                navigate('/admin/dashboard', { replace: true })
-            } else {
-                navigate('/dashboard', { replace: true })
-            }
+            navigate(user.role === 1 ? '/admin/dashboard' : '/dashboard', { replace: true })
         }
     }, [user, navigate])
 
@@ -45,20 +35,12 @@ export default function SignIn() {
 
     const onSubmit = async (data) => {
         try {
-            const response = await authService.signIn({
-                email: data.email,
-                password: data.password
-            })
+            const response = await authService.signIn(data)
 
             if (response.success) {
                 login(response.user, response.token)
                 toast.success('Signed in successfully')
-                // Redirect based on user role
-                if (response.user.role === 1) {
-                    navigate('/admin/dashboard')
-                } else {
-                    navigate('/dashboard')
-                }
+                navigate(response.user.role === 1 ? '/admin/dashboard' : '/dashboard')
             } else {
                 toast.error(response.message || 'Sign in failed')
             }
@@ -69,12 +51,8 @@ export default function SignIn() {
     }
 
     const handleGoogleSignIn = async () => {
-        try {
-            // Implement Google Sign-In logic here
-            console.log('Signing in with Google')
-        } catch (error) {
-            console.error('Google Sign-In failed:', error)
-        }
+        // Implement Google Sign-In logic here
+        toast.error('Google Sign-In not implemented')
     }
 
     return (
@@ -109,29 +87,7 @@ export default function SignIn() {
                                     <FormItem>
                                         <FormLabel>Password</FormLabel>
                                         <FormControl>
-                                            <div className="relative">
-                                                <Input
-                                                    type={showPassword ? 'text' : 'password'}
-                                                    placeholder="Enter your password"
-                                                    {...field}
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                >
-                                                    {showPassword ? (
-                                                        <EyeOff className="h-4 w-4" />
-                                                    ) : (
-                                                        <Eye className="h-4 w-4" />
-                                                    )}
-                                                    <span className="sr-only">
-                                                        {showPassword ? 'Hide password' : 'Show password'}
-                                                    </span>
-                                                </Button>
-                                            </div>
+                                            <PasswordInput placeholder="Enter your password" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -186,4 +142,4 @@ export default function SignIn() {
             </Card>
         </div>
     )
-}
+}   

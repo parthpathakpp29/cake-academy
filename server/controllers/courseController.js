@@ -1,154 +1,168 @@
 import courseModel from "../models/courseModel.js";
 import { uploadThumbnail, uploadVideo } from "../utils/cloudinary.js";
-import fs from 'fs';
-import cloudinary from 'cloudinary'
+import fs from 'fs/promises';
+import cloudinary from 'cloudinary';
+import { createError } from "../utils/error.js";
 
+export const createCourse = async (req, res, next) => {
+    const { title, description, price, lectureTitles } = req.body;
+    let thumbnailResult, lectureResults = [];
 
-export const createCourse = async (req, res) => {
     try {
-        const { title, description, price, lectureTitles } = req.body;
-
         // Validations
-        if (!title || !description || !price) {
-            return res.status(400).send({
-                success: false,
-                message: "All fields are required",
-            });
+        if (!title || !description || !price || !req.files?.thumbnail) {
+            throw createError(400, "Missing required fields");
         }
 
-        if (!req.files?.thumbnail) {
-            return res.status(400).send({
-                success: false,
-                message: "Course thumbnail is required",
-            });
+        // Upload thumbnail
+        thumbnailResult = await uploadThumbnail(req.files.thumbnail[0]);
+
+        // Process videos if present
+        if (req.files.video) {
+            lectureResults = await Promise.all(req.files.video.map(async (videoFile, index) => {
+                const lectureTitle = lectureTitles[index] || `Lecture ${index + 1}`;
+                const videoResult = await uploadVideo(videoFile, "temp", index + 1);
+                return {
+                    title: lectureTitle,
+                    videoUrl: videoResult.playbackUrl || videoResult.url,
+                    videoPublicId: videoResult.publicId,
+                };
+            }));
         }
 
-        let thumbnailResult, lectureResults = [];
-
-        try {
-            // Upload thumbnail
-            thumbnailResult = await uploadThumbnail(req.files.thumbnail[0]);
-
-            // Process videos if present
-            if (req.files.video) {
-                for (let i = 0; i < req.files.video.length; i++) {
-                    const videoFile = req.files.video[i];
-                    const lectureTitle = lectureTitles[i] || `Lecture ${i + 1}`;
-                    const videoResult = await uploadVideo(videoFile, "temp", i + 1);
-                    lectureResults.push({
-                        title: lectureTitle,
-                        videoUrl: videoResult.playbackUrl || videoResult.url,
-                        videoPublicId: videoResult.publicId,
-                    });
-                }
-            }
-
-            // Create course
-            const course = await courseModel.create({
-                title,
-                description,
-                price,
-                thumbnail: {
-                    url: thumbnailResult.url,
-                    publicId: thumbnailResult.publicId,
-                },
-                lectures: lectureResults,
-                // instructor: req.user._id,
-            });
-
-            // Clean up local files after successful upload and database save
-            fs.unlinkSync(req.files.thumbnail[0].path);
-            if (req.files.video) {
-                req.files.video.forEach(video => fs.unlinkSync(video.path));
-            }
-
-            res.status(201).send({
-                success: true,
-                message: "Course created successfully",
-                course,
-            });
-        } catch (uploadError) {
-            // If there's an error during upload or database save, clean up any uploaded files
-            if (thumbnailResult && thumbnailResult.publicId) {
-                await cloudinary.v2.uploader.destroy(thumbnailResult.publicId);
-            }
-            for (const lecture of lectureResults) {
-                if (lecture.videoPublicId) {
-                    await cloudinary.v2.uploader.destroy(lecture.videoPublicId, {
-                        resource_type: "video",
-                    });
-                }
-            }
-            throw uploadError;
-        }
-    } catch (error) {
-        console.error("Error in createCourse:", error);
-        res.status(500).send({
-            success: false,
-            message: "Error in creating course",
-            error: error.message,
+        // Create course
+        const course = await courseModel.create({
+            title,
+            description,
+            price,
+            thumbnail: {
+                url: thumbnailResult.url,
+                publicId: thumbnailResult.publicId,
+            },
+            lectures: lectureResults,
+            instructor: req.user._id, // Assuming you have user authentication middleware
         });
+
+        // Clean up local files
+        await Promise.all([
+            fs.unlink(req.files.thumbnail[0].path),
+            ...req.files.video?.map(video => fs.unlink(video.path)) || []
+        ]);
+
+        res.status(201).json({
+            success: true,
+            message: "Course created successfully",
+            course,
+        });
+    } catch (error) {
+        // Clean up uploaded files on error
+        if (thumbnailResult?.publicId) {
+            await cloudinary.v2.uploader.destroy(thumbnailResult.publicId);
+        }
+        for (const lecture of lectureResults) {
+            if (lecture.videoPublicId) {
+                await cloudinary.v2.uploader.destroy(lecture.videoPublicId, { resource_type: "video" });
+            }
+        }
+        next(error);
     }
 };
 
-// Get All Courses
-export const getAllCourses = async (req, res) => {
+export const getAllCourses = async (req, res, next) => {
     try {
         const courses = await courseModel
             .find({})
             .select('-lectures.videoPublicId')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .lean();
 
-        res.status(200).send({
+        res.status(200).json({
             success: true,
             message: "All Courses",
             totalCount: courses.length,
             courses,
         });
     } catch (error) {
-        console.log(error);
-        res.status(500).send({
-            success: false,
-            message: "Error in getting courses",
-            error
-        });
+        next(createError(500, "Error in getting courses"));
     }
 };
 
-// Get Single Course
-export const getCourseById = async (req, res) => {
+export const getCourseById = async (req, res, next) => {
     try {
-        const course = await courseModel.findById(req.params.id);
+        const course = await courseModel.findById(req.params.id).lean();
         if (!course) {
-            return res.status(404).send({
-                success: false,
-                message: "Course not found"
-            });
+            throw createError(404, "Course not found");
         }
-        res.status(200).send({
+        res.status(200).json({
             success: true,
             message: "Course fetched successfully",
             course,
         });
     } catch (error) {
-        console.log(error);
-        res.status(500).send({
-            success: false,
-            message: "Error in getting course",
-            error
-        });
+        next(error);
     }
 };
 
-// Delete Course
-export const deleteCourse = async (req, res) => {
+export const updateCourse = async (req, res, next) => {
+    try {
+        const { title, description, price, lectureTitles } = req.body;
+        const course = await courseModel.findById(req.params.id);
+        if (!course) {
+            throw createError(404, "Course not found");
+        }
+
+        // Update basic info
+        course.title = title || course.title;
+        course.description = description || course.description;
+        course.price = price || course.price;
+
+        // Update thumbnail if provided
+        if (req.files?.thumbnail) {
+            await cloudinary.v2.uploader.destroy(course.thumbnail.publicId);
+            const thumbnailResult = await uploadThumbnail(req.files.thumbnail[0]);
+            course.thumbnail = {
+                url: thumbnailResult.url,
+                publicId: thumbnailResult.publicId
+            };
+        }
+
+        // Update lectures if provided
+        if (req.files?.video) {
+            // Delete old videos
+            await Promise.all(course.lectures.map(lecture => 
+                cloudinary.v2.uploader.destroy(lecture.videoPublicId, { resource_type: 'video' })
+            ));
+
+            // Upload new videos
+            const newLectures = await Promise.all(req.files.video.map(async (videoFile, index) => {
+                const videoResult = await uploadVideo(videoFile, course._id, index + 1);
+                return {
+                    title: lectureTitles[index] || `Lecture ${index + 1}`,
+                    videoUrl: videoResult.playbackUrl || videoResult.url,
+                    videoPublicId: videoResult.publicId
+                };
+            }));
+
+            course.lectures = newLectures;
+        }
+
+        await course.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Course updated successfully",
+            course,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const deleteCourse = async (req, res, next) => {
     try {
         const course = await courseModel.findById(req.params.id);
         if (!course) {
-            return res.status(404).send({
-                success: false,
-                message: "Course not found"
-            });
+            throw createError(404, "Course not found");
         }
 
         // Delete thumbnail from Cloudinary
@@ -157,114 +171,18 @@ export const deleteCourse = async (req, res) => {
         }
 
         // Delete all lecture videos from Cloudinary
-        for (const lecture of course.lectures) {
-            if (lecture.videoPublicId) {
-                await cloudinary.v2.uploader.destroy(lecture.videoPublicId, {
-                    resource_type: 'video'
-                });
-            }
-        }
+        await Promise.all(course.lectures.map(lecture => 
+            cloudinary.v2.uploader.destroy(lecture.videoPublicId, { resource_type: 'video' })
+        ));
 
-        // Use findByIdAndDelete instead of remove
         await courseModel.findByIdAndDelete(req.params.id);
 
-        res.status(200).send({
+        res.status(200).json({
             success: true,
             message: "Course deleted successfully"
         });
     } catch (error) {
-        console.log(error);
-        res.status(500).send({
-            success: false,
-            message: "Error in deleting course",
-            error
-        });
+        next(error);
     }
 };
 
-// Update Course
-// export const updateCourse = async (req, res) => {
-//     try {
-//         const { title, description, price } = req.body;
-//         const lectures = req.body.lectures ? JSON.parse(req.body.lectures) : null;
-
-//         const course = await courseModel.findById(req.params.id);
-//         if (!course) {
-//             return res.status(404).send({
-//                 success: false,
-//                 message: "Course not found"
-//             });
-//         }
-
-//         // Update basic info
-//         if (title) course.title = title;
-//         if (description) course.description = description;
-//         if (price) course.price = price;
-
-//         // Update thumbnail if provided
-//         if (req.files?.thumbnail) {
-//             // Delete old thumbnail
-//             if (course.thumbnail.publicId) {
-//                 await cloudinary.v2.uploader.destroy(course.thumbnail.publicId);
-//             }
-
-//             // Upload new thumbnail
-//             const thumbnailResult = await uploadThumbnail(req.files.thumbnail[0]);
-//             course.thumbnail = {
-//                 url: thumbnailResult.url,
-//                 publicId: thumbnailResult.publicId
-//             };
-
-//             // Clean up local file
-//             fs.unlinkSync(req.files.thumbnail[0].path);
-//         }
-
-//         // Update lectures if provided
-//         if (lectures && req.files?.videos) {
-//             // Delete old videos
-//             for (const lecture of course.lectures) {
-//                 if (lecture.videoPublicId) {
-//                     await cloudinary.v2.uploader.destroy(lecture.videoPublicId, {
-//                         resource_type: 'video'
-//                     });
-//                 }
-//             }
-
-//             // Upload new videos
-//             const processedLectures = [];
-//             for (let i = 0; i < lectures.length; i++) {
-//                 const videoFile = req.files.videos[i];
-//                 const lectureTitle = lectures[i].title;
-
-//                 const videoResult = await uploadVideo(videoFile, course._id, i + 1);
-
-//                 processedLectures.push({
-//                     title: lectureTitle,
-//                     videoUrl: videoResult.playbackUrl || videoResult.url,
-//                     videoPublicId: videoResult.publicId
-//                 });
-
-//                 // Clean up local file
-//                 fs.unlinkSync(videoFile.path);
-//             }
-
-//             course.lectures = processedLectures;
-//         }
-
-//         await course.save();
-
-//         res.status(200).send({
-//             success: true,
-//             message: "Course updated successfully",
-//             course
-//         });
-
-//     } catch (error) {
-//         console.log(error);
-//         res.status(500).send({
-//             success: false,
-//             message: "Error in updating course",
-//             error
-//         });
-//     }
-// };

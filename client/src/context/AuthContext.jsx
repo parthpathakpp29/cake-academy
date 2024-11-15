@@ -32,15 +32,25 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('user');
     };
 
-    if (loading) {
-        return null; // or a loading spinner component
-    }
+    const value = {
+        user,
+        token,
+        login,
+        logout,
+        loading
+    };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, loading }}>
-            {children}
+        <AuthContext.Provider value={value}>
+            {!loading && children}
         </AuthContext.Provider>
     )
 }
 
-export const useAuth = () => useContext(AuthContext)
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+}

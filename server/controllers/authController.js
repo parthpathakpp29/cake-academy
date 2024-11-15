@@ -1,87 +1,82 @@
 import userModel from "../models/userModel.js";
-import { comparePassword, hashPassword } from "./../helpers/authHelper.js";
+import { comparePassword, hashPassword } from "../helpers/authHelper.js";
 import JWT from "jsonwebtoken";
+import { createLogger } from "../utils/logger.js";
+import crypto from "crypto";
+import { Resend } from 'resend';
+
+const logger = createLogger('authController');
+
+const resend = new Resend('re_e3o1och3_3nXGDKDmdampKJgnDzk6VR6A')
 
 export const registerController = async (req, res) => {
     try {
-        const { name, email, password, phone, address, answer } = req.body;
-        //validations
-        if (!name) {
-            return res.send({ error: "Name is Required" });
+        const { name, email, password } = req.body;
+
+        if (!name || !email || !password) {
+            return res.status(400).json({ success: false, message: "All fields are required" });
         }
-        if (!email) {
-            return res.send({ message: "Email is Required" });
-        }
-        if (!password) {
-            return res.send({ message: "Password is Required" });
-        }
-        //check user
-        const exisitingUser = await userModel.findOne({ email });
-        //exisiting user
-        if (exisitingUser) {
-            return res.status(200).send({
+
+        const existingUser = await userModel.findOne({ email });
+        if (existingUser) {
+            return res.status(409).json({
                 success: false,
-                message: "Already Register please login",
+                message: "Email already registered",
             });
         }
-        //register user
+
         const hashedPassword = await hashPassword(password);
-        //save
-        const user = await new userModel({
-            name,
-            email,
-            password: hashedPassword,
+        const user = await new userModel({ name, email, password: hashedPassword }).save();
 
-        }).save();
-
-        res.status(201).send({
+        res.status(201).json({
             success: true,
-            message: "User Register Successfully",
-            user,
+            message: "User registered successfully",
+            user: { id: user._id, name: user.name, email: user.email },
         });
     } catch (error) {
-        console.log(error);
-        res.status(500).send({
+        logger.error('Error in registerController:', error);
+        res.status(500).json({
             success: false,
-            message: "Errro in Registeration",
-            error,
+            message: "Internal server error",
+            error: error.message,
         });
     }
 };
 
-//POST LOGIN
 export const loginController = async (req, res) => {
     try {
         const { email, password } = req.body;
-        //validation
+
         if (!email || !password) {
-            return res.status(404).send({
+            return res.status(400).json({
                 success: false,
-                message: "Invalid email or password",
+                message: "Email and password are required",
             });
         }
-        //check user
+
         const user = await userModel.findOne({ email });
         if (!user) {
-            return res.status(404).send({
+            return res.status(404).json({
                 success: false,
-                message: "Email is not registerd",
+                message: "User not found",
             });
         }
-        const match = await comparePassword(password, user.password);
-        if (!match) {
-            return res.status(200).send({
+
+        const isMatch = await comparePassword(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({
                 success: false,
-                message: "Invalid Password",
+                message: "Invalid credentials",
             });
         }
-        //token
-        const token = await JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
+
+        const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
             expiresIn: "7d",
         });
-        res.status(200).send({
+
+        res.status(200).json({
             success: true,
-            message: "login successfully",
+            message: "Login successful",
             user: {
                 _id: user._id,
                 name: user.name,
@@ -91,23 +86,112 @@ export const loginController = async (req, res) => {
             token,
         });
     } catch (error) {
-        console.log(error);
-        res.status(500).send({
+        logger.error('Error in loginController:', error);
+        res.status(500).json({
             success: false,
-            message: "Error in login",
-            error,
+            message: "Internal server error",
+            error: error.message,
         });
     }
 };
 
-
 export const testController = (req, res) => {
+    res.json({ message: "Protected route accessed successfully" });
+};
+
+export const forgotPasswordController = async (req, res) => {
     try {
-        res.send("Protected Routes");
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ success: false, message: "Email is required" });
+        }
+
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        // Generate OTP
+        const otp = crypto.randomInt(100000, 999999).toString();
+        const otpExpiry = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
+
+        // Save OTP to user document
+        user.resetPasswordOtp = otp;
+        user.resetPasswordOtpExpiry = otpExpiry;
+        await user.save();
+
+        // Send OTP via email using Resend
+        const { data, error } = await resend.emails.send({
+            from: 'Acme <onboarding@resend.dev>',
+            to: email,
+            subject: 'Password Reset OTP',
+            text: `Your OTP for password reset is: ${otp}. This OTP is valid for 10 minutes.`,
+        });
+
+        if (error) {
+            logger.error('Error sending email:', error);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to send OTP email",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "OTP sent to your email",
+        });
     } catch (error) {
-        console.log(error);
-        res.send({ error });
+        logger.error('Error in forgotPasswordController:', error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message,
+        });
     }
 };
 
+export const resetPasswordController = async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
 
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ success: false, message: "All fields are required" });
+        }
+
+        const user = await userModel.findOne({ 
+            email, 
+            resetPasswordOtp: otp,
+            resetPasswordOtpExpiry: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired OTP",
+            });
+        }
+
+        // Reset password
+        const hashedPassword = await hashPassword(newPassword);
+        user.password = hashedPassword;
+        user.resetPasswordOtp = undefined;
+        user.resetPasswordOtpExpiry = undefined;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Password reset successfully",
+        });
+    } catch (error) {
+        logger.error('Error in resetPasswordController:', error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message,
+        });
+    }
+};

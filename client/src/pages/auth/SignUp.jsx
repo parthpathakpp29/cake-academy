@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -13,15 +12,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Separator } from "@/components/ui/separator"
 import { authService } from '@/services/api'
 import { useAuth } from '@/context/AuthContext'
-
-const signUpSchema = z.object({
-    name: z.string().min(3, 'Name must be at least 3 characters'),
-    email: z.string().email('Invalid email address'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-})
+import { signUpSchema } from '@/utils/validations'
+import { PasswordInput } from '@/components/PasswordInput'
 
 export default function SignUp() {
-    const [showPassword, setShowPassword] = useState(false)
     const navigate = useNavigate()
     const { user } = useAuth()
 
@@ -37,6 +31,7 @@ export default function SignUp() {
             name: '',
             email: '',
             password: '',
+            confirmPassword: '',
         },
     })
 
@@ -61,12 +56,8 @@ export default function SignUp() {
     }
 
     const handleGoogleSignUp = async () => {
-        try {
-            // Implement Google Sign-Up logic here
-            console.log('Signing up with Google')
-        } catch (error) {
-            console.error('Google Sign-Up failed:', error)
-        }
+        // Implement Google Sign-Up logic here
+        toast.error('Google Sign-Up not implemented')
     }
 
     return (
@@ -114,29 +105,20 @@ export default function SignUp() {
                                     <FormItem>
                                         <FormLabel>Password</FormLabel>
                                         <FormControl>
-                                            <div className="relative">
-                                                <Input
-                                                    type={showPassword ? 'text' : 'password'}
-                                                    placeholder="Create a password"
-                                                    {...field}
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                >
-                                                    {showPassword ? (
-                                                        <EyeOff className="h-4 w-4" />
-                                                    ) : (
-                                                        <Eye className="h-4 w-4" />
-                                                    )}
-                                                    <span className="sr-only">
-                                                        {showPassword ? 'Hide password' : 'Show password'}
-                                                    </span>
-                                                </Button>
-                                            </div>
+                                            <PasswordInput placeholder="Create a password" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="confirmPassword"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Confirm Password</FormLabel>
+                                        <FormControl>
+                                            <PasswordInput placeholder="Confirm your password" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

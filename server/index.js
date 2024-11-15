@@ -5,6 +5,7 @@ import cors from "cors";
 import connectDB from "./config/db.js";
 import authRoutes from './routes/authRoute.js';
 import courseRoutes from './routes/courseRoute.js';
+
 import cloudinary from "cloudinary";
 
 
