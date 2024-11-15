@@ -2,6 +2,7 @@ import Razorpay from "razorpay";
 import Enrollment from "../models/enrollmentModel.js";
 import Course from "../models/courseModel.js";
 
+
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_SECRET
