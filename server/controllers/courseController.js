@@ -1,8 +1,10 @@
 import courseModel from "../models/courseModel.js";
+import Enrollment from "../models/enrollmentModel.js";
 import { uploadThumbnail, uploadVideo } from "../utils/cloudinary.js";
 import fs from 'fs/promises';
 import cloudinary from 'cloudinary';
 import { createError } from "../utils/error.js";
+
 
 export const createCourse = async (req, res, next) => {
     const { title, description, price, lectureTitles } = req.body;
@@ -183,6 +185,26 @@ export const deleteCourse = async (req, res, next) => {
         });
     } catch (error) {
         next(error);
+    }
+};
+
+export const checkEnrollment = async (req, res, next) => {
+    try {
+        const { courseId } = req.params;
+        const userId = req.user._id;
+
+        const enrollment = await Enrollment.findOne({
+            user: userId,
+            course: courseId,
+            status: "completed"
+        });
+
+        res.json({
+            success: true,
+            isEnrolled: !!enrollment
+        });
+    } catch (error) {
+        next(createError(500, "Error checking enrollment status"));
     }
 };
 

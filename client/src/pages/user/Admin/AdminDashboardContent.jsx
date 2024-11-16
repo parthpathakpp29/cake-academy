@@ -1,13 +1,67 @@
+import { useEffect, useState } from 'react';
 import {
-    Card, CardContent, CardHeader, CardTitle, CardDescription
+    Card, CardContent, CardHeader, CardTitle
 } from "@/components/ui/card";
 
+import { Loader2 } from 'lucide-react';
+import { authService, courseService, paymentService } from '@/services/api';
+
 export default function AdminDashboardContent() {
-    const stats = [
-        { label: 'Total Users', value: '1,234' },
-        { label: 'Active Courses', value: '56' },
-        { label: 'Total Revenue', value: '$12,345' },
-    ]
+    const [stats, setStats] = useState([
+        { label: 'Total Users', value: '0' },
+        { label: 'Active Courses', value: '0' },
+        { label: 'Total Revenue', value: '₹0' },
+    ]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                const [coursesResponse, usersResponse, revenueResponse] = await Promise.all([
+                    courseService.getAllCourses(),
+                    authService.getTotalUsers(),
+                    paymentService.getTotalRevenue()
+                ]);
+
+                setStats([
+                    { label: 'Total Users', value: usersResponse.totalUsers.toString() },
+                    { label: 'Active Courses', value: coursesResponse.totalCount.toString() },
+                    { label: 'Total Revenue', value: `₹${revenueResponse.totalRevenue.toFixed(2)}` },
+                ]);
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+                setError("Failed to load dashboard data. Please try again later.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <Loader2 className="mr-2 h-16 w-16 animate-spin" />
+                <span className="text-2xl font-semibold">Loading...</span>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+                    <p className="text-lg">{error}</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -24,8 +78,6 @@ export default function AdminDashboardContent() {
                     </Card>
                 ))}
             </div>
-            {/* Add more admin-specific content here */}
         </div>
     )
 }
-

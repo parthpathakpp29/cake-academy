@@ -2,10 +2,9 @@ import Razorpay from "razorpay";
 import Enrollment from "../models/enrollmentModel.js";
 import Course from "../models/courseModel.js";
 
-
 const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_SECRET
+    key_id: 'rzp_test_eB0p0Uq4Lgfu8W',
+    key_secret: 'mCMxtv3pTb0j91AVKbaeb7So'
 });
 
 export const createOrder = async (req, res) => {
@@ -23,7 +22,7 @@ export const createOrder = async (req, res) => {
         const options = {
             amount: course.price * 100, // Razorpay expects amount in paise
             currency: "INR",
-            receipt: `course_${courseId}_${Date.now()}`
+            receipt: `course_${courseId}_${Date.now()}`.substring(0, 40) // Ensure receipt is not longer than 40 characters
         };
 
         const order = await razorpay.orders.create(options);
@@ -33,14 +32,14 @@ export const createOrder = async (req, res) => {
             order
         });
     } catch (error) {
-        console.error(error);
+        console.error("Order creation error:", error);
         res.status(500).json({
             success: false,
-            message: "Error creating payment order"
+            message: "Error creating payment order",
+            error: error.message
         });
     }
 };
-
 export const verifyPayment = async (req, res) => {
     try {
         const { razorpay_payment_id, courseId, amount } = req.body;
@@ -56,13 +55,40 @@ export const verifyPayment = async (req, res) => {
 
         res.json({
             success: true,
-            message: "Payment verified successfully"
+            message: "Payment verified and enrollment created successfully"
         });
     } catch (error) {
         console.error(error);
         res.status(500).json({
             success: false,
-            message: "Error verifying payment"
+            message: "Error verifying payment and creating enrollment"
+        });
+    }
+};
+
+export const getTotalRevenueController = async (req, res) => {
+    try {
+        const result = await Enrollment.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { $sum: "$amount" }
+                }
+            }
+        ]);
+
+        const totalRevenue = result.length > 0 ? result[0].totalRevenue : 0;
+
+        res.status(200).json({
+            success: true,
+            totalRevenue
+        });
+    } catch (error) {
+        console.error("Error calculating total revenue:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error calculating total revenue",
+            error: error.message
         });
     }
 };

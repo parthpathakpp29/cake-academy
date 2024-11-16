@@ -27,6 +27,15 @@ const userSchema = new mongoose.Schema(
             default: 0,
             enum: [0, 1], // 0 for regular user, 1 for admin
         },
+        enrolledCourses: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Course'
+          }],
+          status: {
+            type: String,
+            enum: ['Active', 'Inactive'],
+            default: 'Active'
+          },
         resetPasswordOtp: {
             type: String,
         },

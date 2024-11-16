@@ -66,7 +66,22 @@ export const authService = {
             throw error.response?.data || new Error('Failed to reset password');
         }
     },
-
+    async getTotalUsers() {
+        try {
+            const response = await api.get('/auth/total-users');
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || new Error('Failed to fetch total users');
+        }
+    },
+    async getAllUsers() {
+        try {
+            const response = await api.get('/auth/users');
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || new Error('Failed to fetch users');
+        }
+    },
 };
 
 export const courseService = {
@@ -150,7 +165,7 @@ export const courseService = {
 
     async checkEnrollment(courseId) {
         try {
-            const response = await api.get(`/courses/${courseId}/check-enrollment`);
+            const response = await api.get(`/courses/check-enrollment/${courseId}`);
             return response.data;
         } catch (error) {
             throw error.response ? error.response.data : new Error('Failed to check enrollment');
@@ -174,4 +189,17 @@ export const courseService = {
             throw error.response ? error.response.data : new Error('Failed to verify payment');
         }
     },
+
 };
+
+export const paymentService = {
+    async getTotalRevenue() {
+        try {
+            const response = await api.get('/payment/total-revenue');
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || new Error('Failed to fetch total revenue');
+        }
+    },
+};
+

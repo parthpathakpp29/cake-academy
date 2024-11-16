@@ -4,6 +4,7 @@ import JWT from "jsonwebtoken";
 import { createLogger } from "../utils/logger.js";
 import crypto from "crypto";
 import { Resend } from 'resend';
+import Enrollment from "../models/enrollmentModel.js";
 
 const logger = createLogger('authController');
 
@@ -192,6 +193,55 @@ export const resetPasswordController = async (req, res) => {
             success: false,
             message: "Internal server error",
             error: error.message,
+        });
+    }
+};
+
+export const getTotalUsersController = async (req, res) => {
+    try {
+        const totalUsers = await userModel.countDocuments();
+        res.status(200).json({
+            success: true,
+            totalUsers
+        });
+    } catch (error) {
+        logger.error('Error in getTotalUsersController:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error fetching total users",
+            error: error.message
+        });
+    }
+};
+
+
+export const getAllUsersController = async (req, res) => {
+    try {
+        const users = await userModel.find({}, '-password');
+
+        const formattedUsers = await Promise.all(users.map(async (user) => {
+            const enrollmentCount = await Enrollment.countDocuments({ user: user._id, status: "completed" });
+            return {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                status: user.status,
+                enrolledCourses: enrollmentCount,
+                createdAt: user.createdAt
+            };
+        }));
+
+        res.status(200).json({
+            success: true,
+            users: formattedUsers
+        });
+    } catch (error) {
+        console.error('Error in getAllUsersController:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error fetching users",
+            error: error.message
         });
     }
 };

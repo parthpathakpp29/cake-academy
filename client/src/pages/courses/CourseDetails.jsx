@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from "sonner"
-import { Loader2, Play, Phone, Mail, MapPin, Clock, Users, Award, BookOpen, ChevronLeft, Star } from 'lucide-react'
+import { Loader2, Play, Phone, Mail, MapPin, Users, Award } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -14,12 +14,15 @@ export default function CourseDetails() {
   const navigate = useNavigate()
   const [course, setCourse] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isEnrolled, setIsEnrolled] = useState(false)
 
   useEffect(() => {
     const fetchCourseDetails = async () => {
       try {
         const response = await courseService.getCourseById(id)
         setCourse(response.course)
+        const enrollmentStatus = await courseService.checkEnrollment(id)
+        setIsEnrolled(enrollmentStatus.isEnrolled)
       } catch (error) {
         toast.error("Failed to fetch course details")
         navigate('/courses')
@@ -33,9 +36,55 @@ export default function CourseDetails() {
     }
   }, [id, navigate])
 
-  const handleStartCourse = () => {
+  const handleStartCourse = async () => {
     if (course?._id) {
-      navigate(`/courses/${course._id}/lecture/0`)
+      if (isEnrolled) {
+        navigate(`/courses/${course._id}/lecture/0`)
+      } else {
+        try {
+          const orderResponse = await courseService.createOrder(course._id)
+          if (!orderResponse.success || !orderResponse.order) {
+            throw new Error("Failed to create order")
+          }
+          
+          const options = {
+            key: "rzp_test_eB0p0Uq4Lgfu8W", // Replace with your actual Razorpay key
+            amount: orderResponse.order.amount,
+            currency: "INR",
+            name: "Your Company Name",
+            description: `Enrollment for ${course.title}`,
+            order_id: orderResponse.order.id,
+            handler: async function (response) {
+              try {
+                await courseService.verifyPayment({
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                  courseId: course._id,
+                  amount: orderResponse.order.amount,
+                })
+                toast.success("Payment successful! You can now access the course.")
+                setIsEnrolled(true)
+              } catch (error) {
+                toast.error("Payment verification failed. Please contact support.")
+              }
+            },
+            prefill: {
+              name: "John Doe",
+              email: "john@example.com",
+              contact: "9999999999"
+            },
+            theme: {
+              color: "#3399cc"
+            }
+          };
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        } catch (error) {
+          console.error("Payment error:", error)
+          toast.error("Failed to process payment. Please try again.")
+        }
+      }
     } else {
       toast.error("Course not available")
     }
@@ -51,8 +100,7 @@ export default function CourseDetails() {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-
-      <MainContent course={course} handleStartCourse={handleStartCourse} />
+      <MainContent course={course} handleStartCourse={handleStartCourse} isEnrolled={isEnrolled} />
     </div>
   )
 }
@@ -76,7 +124,6 @@ function NotFoundState() {
         <h2 className="text-2xl font-bold">Course Not Found</h2>
         <p className="text-gray-600">The course you're looking for doesn't exist or has been removed.</p>
         <Button onClick={() => navigate('/courses')} className="mt-4">
-          <ChevronLeft className="h-4 w-4 mr-2" />
           Back to Courses
         </Button>
       </div>
@@ -84,23 +131,22 @@ function NotFoundState() {
   )
 }
 
-function MainContent({ course, handleStartCourse }) {
+function MainContent({ course, handleStartCourse, isEnrolled }) {
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-12">
-          <Curriculum lectures={course.lectures} />
+          <Curriculum lectures={course.lectures} isEnrolled={isEnrolled} />
         </div>
         <div className="lg:col-span-1">
-          <CourseSidebar course={course} handleStartCourse={handleStartCourse} />
+          <CourseSidebar course={course} handleStartCourse={handleStartCourse} isEnrolled={isEnrolled} />
         </div>
       </div>
     </div>
   )
 }
 
-
-function Curriculum({ lectures }) {
+function Curriculum({ lectures, isEnrolled }) {
   return (
     <section className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex justify-between items-center mb-6">
@@ -137,7 +183,9 @@ function Curriculum({ lectures }) {
             <AccordionContent className="pt-2 pb-4">
               <div className="pl-12">
                 <p className="text-gray-600">{lecture.description || 'No description available'}</p>
-                <LectureResources resources={lecture.resources} />
+                {!isEnrolled && (
+                  <p className="text-sm text-primary mt-2">Enroll in the course to access this lesson</p>
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -147,23 +195,7 @@ function Curriculum({ lectures }) {
   )
 }
 
-function LectureResources({ resources }) {
-  if (!resources) return null
-  return (
-    <div className="mt-4">
-      <h4 className="font-medium mb-2">Resources:</h4>
-      <ul className="list-disc pl-4 space-y-1">
-        {resources.map((resource, idx) => (
-          <li key={idx} className="text-primary hover:underline">
-            <a href={resource.url}>{resource.title}</a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-function CourseSidebar({ course, handleStartCourse }) {
+function CourseSidebar({ course, handleStartCourse, isEnrolled }) {
   return (
     <Card className="sticky top-8">
       <CardContent className="p-6 space-y-6">
@@ -182,16 +214,20 @@ function CourseSidebar({ course, handleStartCourse }) {
               {course.discountPercentage ? `${course.discountPercentage}% OFF` : 'Full Price'}
             </Badge>
           </div>
-          <Progress value={33} className="w-full" />
-          <p className="text-sm text-gray-600">
-            <strong>33% complete</strong> - Resume your learning journey
-          </p>
+          {isEnrolled && (
+            <>
+              <Progress value={33} className="w-full" />
+              <p className="text-sm text-gray-600">
+                <strong>33% complete</strong> - Resume your learning journey
+              </p>
+            </>
+          )}
           <Button 
             className="w-full" 
             size="lg"
             onClick={handleStartCourse}
           >
-            Continue Learning
+            {isEnrolled ? 'Continue Learning' : 'Enroll Now'}
           </Button>
           <p className="text-center text-sm text-gray-500">
             30-day money-back guarantee

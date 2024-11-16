@@ -4,7 +4,9 @@ import {
     loginController,
     testController,
     forgotPasswordController,
-    resetPasswordController
+    resetPasswordController,
+    getTotalUsersController,
+    getAllUsersController
 } from "../controllers/authController.js";
 import { isAdmin, requireSignIn } from "../middlewares/authMiddleware.js";
 
@@ -17,5 +19,8 @@ router.get("/user-auth", requireSignIn, (req, res) => res.status(200).json({ ok:
 router.get("/admin-auth", requireSignIn, isAdmin, (req, res) => res.status(200).json({ ok: true }));
 router.post("/forgot-password", forgotPasswordController);
 router.post("/reset-password", resetPasswordController);
+router.get("/total-users", requireSignIn, isAdmin, getTotalUsersController);
+router.get("/users", requireSignIn, isAdmin, getAllUsersController);
+
 
 export default router;
