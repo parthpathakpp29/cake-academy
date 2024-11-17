@@ -1,5 +1,5 @@
 import express from "express";
-import { createCourse, getAllCourses, getCourseById, deleteCourse, checkEnrollment } from "../controllers/courseController.js";
+import { createCourse, getAllCourses, getCourseById, deleteCourse, checkEnrollment, getUserPurchases } from "../controllers/courseController.js";
 import upload from "../middlewares/uploadMiddleware.js";
 import { isAdmin, requireSignIn } from "../middlewares/authMiddleware.js";
 
@@ -28,5 +28,8 @@ router.delete("/delete-course/:id", requireSignIn, isAdmin, deleteCourse);
 
 // Check enrollment status
 router.get("/check-enrollment/:courseId", requireSignIn, checkEnrollment);
+
+router.get("/user-purchases", requireSignIn, getUserPurchases);
+
 
 export default router;

@@ -1,17 +1,11 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-    LayoutDashboard,
     User,
     ShoppingCart,
-
     LogOut,
-    TrendingUp,
-    CreditCard,
-    Activity,
     Menu,
     Bell,
-    ChevronRight,
 } from 'lucide-react'
 import {
     Card,
@@ -26,16 +20,13 @@ import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useAuth } from '@/context/AuthContext'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
+import { courseService } from '@/services/api'
 
-// Sidebar Component
 const Sidebar = React.memo(({ activeSection, onSectionChange, onLogout, user }) => {
     const menuItems = [
-        { icon: LayoutDashboard, label: 'Dashboard', key: 'dashboard' },
         { icon: User, label: 'Profile', key: 'profile' },
         { icon: ShoppingCart, label: 'Purchases', key: 'purchases' },
-
     ]
 
     return (
@@ -48,7 +39,6 @@ const Sidebar = React.memo(({ activeSection, onSectionChange, onLogout, user }) 
                     </Avatar>
                     <div>
                         <h2 className="text-xl font-semibold">{user?.name}</h2>
-
                     </div>
                 </div>
             </div>
@@ -77,13 +67,10 @@ const Sidebar = React.memo(({ activeSection, onSectionChange, onLogout, user }) 
 
 Sidebar.displayName = 'Sidebar'
 
-// Mobile Sidebar
 const MobileSidebar = React.memo(({ activeSection, onSectionChange, onLogout, user }) => {
     const menuItems = [
-        { icon: LayoutDashboard, label: 'Dashboard', key: 'dashboard' },
         { icon: User, label: 'Profile', key: 'profile' },
         { icon: ShoppingCart, label: 'Purchases', key: 'purchases' },
-
     ]
 
     return (
@@ -136,12 +123,29 @@ const MobileSidebar = React.memo(({ activeSection, onSectionChange, onLogout, us
 
 MobileSidebar.displayName = 'MobileSidebar'
 
-// Dashboard Main Component
 const Dashboard = () => {
-    const [activeSection, setActiveSection] = useState('dashboard')
+    const [activeSection, setActiveSection] = useState('purchases')
+    const [purchases, setPurchases] = useState([])
+    const [loading, setLoading] = useState(true)
     const isMobile = useIsMobile()
     const navigate = useNavigate()
     const { user, logout } = useAuth()
+
+    const fetchPurchases = useCallback(async () => {
+        try {
+            setLoading(true)
+            const response = await courseService.getUserPurchases()
+            setPurchases(response.purchases)
+        } catch (error) {
+            console.error('Error fetching purchases:', error)
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        fetchPurchases()
+    }, [fetchPurchases])
 
     const handleLogout = useCallback(() => {
         logout()
@@ -150,16 +154,14 @@ const Dashboard = () => {
 
     const renderContent = useCallback(() => {
         switch (activeSection) {
-            case 'dashboard':
-                return <DashboardContent user={user} />
             case 'profile':
                 return <ProfileContent user={user} />
             case 'purchases':
-                return <PurchasesContent />
+                return <PurchasesContent purchases={purchases} loading={loading} />
             default:
-                return <DashboardContent user={user} />
+                return <PurchasesContent purchases={purchases} loading={loading} />
         }
-    }, [activeSection, user])
+    }, [activeSection, user, purchases, loading])
 
     return (
         <div className="flex flex-col lg:flex-row bg-gray-50 min-h-screen">
@@ -199,91 +201,25 @@ const Dashboard = () => {
     )
 }
 
-// Dashboard Content Component
-const DashboardContent = React.memo(({ user }) => {
-    const stats = [
-        { icon: TrendingUp, label: 'Total Courses', value: '15', color: 'bg-green-100 text-green-600' },
-        { icon: ShoppingCart, label: 'Purchases', value: '8', color: 'bg-blue-100 text-blue-600' },
-        { icon: CreditCard, label: 'Total Spent', value: '$499', color: 'bg-purple-100 text-purple-600' },
-    ]
-
-    const recentActivities = [
-        { icon: Activity, label: 'Enrolled in Baking Masterclass', date: '2 days ago' },
-        { icon: ShoppingCart, label: 'Purchased Pastry Workshop', date: '1 week ago' },
-    ]
-
-    return (
-        <div className="space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold mb-2">Welcome, {user?.name}!</h1>
-                <p className="text-muted-foreground">Here's an overview of your learning journey</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {stats.map((stat, index) => (
-                    <Card key={index} className="hover:shadow-md transition-shadow">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
-                            <div className={cn("p-2 rounded-full", stat.color)}>
-                                <stat.icon className="h-4 w-4" />
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stat.value}</div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Recent Activity</CardTitle>
-                    <CardDescription>Your latest learning activities and purchases</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {recentActivities.map((activity, index) => (
-                        <div
-                            key={index}
-                            className="flex items-center justify-between py-4 border-b last:border-b-0 hover:bg-gray-50 transition-colors"
-                        >
-                            <div className="flex items-center space-x-4">
-                                <div className={cn("p-2 rounded-full bg-gray-100")}>
-                                    <activity.icon className="h-5 w-5 text-gray-600" />
-                                </div>
-                                <div>
-                                    <p className="font-medium">{activity.label}</p>
-                                    <p className="text-sm text-muted-foreground">{activity.date}</p>
-                                </div>
-                            </div>
-                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
-        </div>
-    )
-})
-
-DashboardContent.displayName = 'DashboardContent'
-
-// Placeholder components for other sections
 const ProfileContent = React.memo(({ user }) => (
     <Card>
         <CardHeader>
             <CardTitle>User Profile</CardTitle>
-            <CardDescription>Your personal information and account details</CardDescription>
+            <CardDescription>Your personal information</CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
                 <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Name</p>
+                    <p className="text-sm font-medium text-muted-foreground">Name</p>
                     <p className="text-lg font-semibold">{user?.name}</p>
                 </div>
                 <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Email</p>
+                    <p className="text-sm font-medium text-muted-foreground">Email</p>
                     <p className="text-lg font-semibold">{user?.email}</p>
                 </div>
                 <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Role</p>
-                    <p className="text-lg font-semibold">Student</p>
+                    <p className="text-sm font-medium text-muted-foreground">Role</p>
+                    <p className="text-lg font-semibold">{user?.role || 'Student'}</p>
                 </div>
             </div>
         </CardContent>
@@ -292,20 +228,43 @@ const ProfileContent = React.memo(({ user }) => (
 
 ProfileContent.displayName = 'ProfileContent'
 
-const PurchasesContent = React.memo(() => (
+const PurchasesContent = React.memo(({ purchases, loading,navigate }) => (
     <Card>
         <CardHeader>
             <CardTitle>Your Purchases</CardTitle>
             <CardDescription>A history of your course purchases and enrollments</CardDescription>
         </CardHeader>
         <CardContent>
-            <p className="text-muted-foreground">No purchases made yet. Start your learning journey today!</p>
-            <Button className="mt-4" >Browse Courses</Button>
+            {loading ? (
+                <p className="text-center">Loading your purchases...</p>
+            ) : purchases.length > 0 ? (
+                <ul className="space-y-4">
+                    {purchases.map((purchase) => (
+                        <li key={purchase._id} className="border-b pb-4 last:border-b-0">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="font-semibold">{purchase.course.title}</h3>
+                                    <p className="text-sm text-muted-foreground">Purchased on: {new Date(purchase.purchaseDate).toLocaleDateString()}</p>
+                                </div>
+                                <Badge variant="secondary">₹{purchase.amount}</Badge>
+                            </div>
+                            <p className="mt-2 text-sm">{purchase.course.description}</p>
+                            
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p className="text-center text-muted-foreground">No purchases made yet. Start your learning journey today!</p>
+            )}
+            {purchases.length === 0 && (
+                <div className="text-center mt-4">
+                    <Button onClick={() => navigate('/courses')}>Browse Courses</Button>
+                </div>
+            )}
         </CardContent>
     </Card>
 ))
 
 PurchasesContent.displayName = 'PurchasesContent'
-
 
 export default Dashboard

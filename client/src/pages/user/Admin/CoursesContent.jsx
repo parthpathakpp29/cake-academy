@@ -139,101 +139,13 @@ export default function CoursesContent() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            className="h-4 w-4 text-muted-foreground"
-                        >
-                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                        </svg>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{courses.length}</div>
-                        <p className="text-xs text-muted-foreground">
-                            +20.1% from last month
-                        </p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            className="h-4 w-4 text-muted-foreground"
-                        >
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                            <circle cx="9" cy="7" r="4" />
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                        </svg>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {courses.reduce((total, course) => total + (course.students?.length || 0), 0)}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            +180.1% from last month
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            className="h-4 w-4 text-muted-foreground"
-                        >
-                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                        </svg>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            ₹{courses.reduce((total, course) => total + course.price * (course.students?.length || 0), 0).toLocaleString()}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            +19% from last month
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Avg. Course Rating</CardTitle>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            className="h-4 w-4 text-muted-foreground"
-                        >
-                            <path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z" />
-                        </svg>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">4.5</div>
-                        <p className="text-xs text-muted-foreground">
-                            +8% from last month
-                        </p>
-                    </CardContent>
-                </Card>
+                
+                
             </div>
 
             <Card>
@@ -275,22 +187,7 @@ export default function CoursesContent() {
                                         )}
                                     </Button>
                                 </TableHead>
-                                <TableHead>
-                                    <Button variant="ghost" onClick={() => handleSort('students')}>
-                                        Students
-                                        {sortConfig.key === 'students' && (
-                                            <span>{sortConfig.direction === 'asc' ? ' ↑' : ' ↓'}</span>
-                                        )}
-                                    </Button>
-                                </TableHead>
-                                <TableHead>
-                                    <Button variant="ghost" onClick={() => handleSort('revenue')}>
-                                        Revenue
-                                        {sortConfig.key === 'revenue' && (
-                                            <span>{sortConfig.direction === 'asc' ? ' ↑' : ' ↓'}</span>
-                                        )}
-                                    </Button>
-                                </TableHead>
+                               
                                 <TableHead>Lectures</TableHead>
                                 <TableHead className="text-right">
                                     <Button variant="ghost" onClick={() => handleSort('price')}>
@@ -316,8 +213,6 @@ export default function CoursesContent() {
                                             </span>
                                         </div>
                                     </TableCell>
-                                    <TableCell>{course.students?.length || 0}</TableCell>
-                                    <TableCell>₹{(course.price * (course.students?.length || 0)).toLocaleString()}</TableCell>
                                     <TableCell>{course.lectures?.length || 0}</TableCell>
                                     <TableCell className="text-right">₹{course.price.toLocaleString()}</TableCell>
                                     <TableCell>

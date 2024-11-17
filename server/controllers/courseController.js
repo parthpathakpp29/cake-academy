@@ -208,3 +208,32 @@ export const checkEnrollment = async (req, res, next) => {
     }
 };
 
+export const getUserPurchases = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
+
+        const purchases = await Enrollment.find({ user: userId, status: "completed" })
+            .populate('course', 'title description price')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const formattedPurchases = purchases.map(purchase => ({
+            _id: purchase._id,
+            course: {
+                _id: purchase.course._id,
+                title: purchase.course.title,
+                description: purchase.course.description,
+            },
+            amount: purchase.course.price,
+            purchaseDate: purchase.createdAt
+        }));
+
+        res.status(200).json({
+            success: true,
+            purchases: formattedPurchases
+        });
+    } catch (error) {
+        next(createError(500, "Error fetching user purchases"));
+    }
+};
+

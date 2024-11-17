@@ -189,8 +189,17 @@ export const courseService = {
             throw error.response ? error.response.data : new Error('Failed to verify payment');
         }
     },
-
+    async getUserPurchases() {
+        try {
+            const response = await api.get('/courses/user-purchases');
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || new Error('Failed to fetch user purchases');
+        }
+    },
 };
+
+
 
 export const paymentService = {
     async getTotalRevenue() {

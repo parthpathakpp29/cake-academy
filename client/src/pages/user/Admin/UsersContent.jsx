@@ -1,6 +1,4 @@
-'use client'
-
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -17,31 +15,38 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { UserPlus, Loader2 } from 'lucide-react'
+import { UserPlus, Loader2, Search } from 'lucide-react'
 import { authService } from '@/services/api'
-
+import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function UsersContent() {
     const [users, setUsers] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [searchTerm, setSearchTerm] = useState("")
+
+    const fetchUsers = useCallback(async () => {
+        try {
+            setLoading(true)
+            const response = await authService.getAllUsers()
+            setUsers(response.users)
+        } catch (err) {
+            setError('Failed to fetch users. Please try again later.')
+            console.error('Error fetching users:', err)
+        } finally {
+            setLoading(false)
+        }
+    }, [])
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                setLoading(true)
-                const response = await authService.getAllUsers()
-                setUsers(response.users)
-            } catch (err) {
-                setError('Failed to fetch users. Please try again later.')
-                console.error('Error fetching users:', err)
-            } finally {
-                setLoading(false)
-            }
-        }
-
         fetchUsers()
-    }, [])
+    }, [fetchUsers])
+
+    const filteredUsers = users.filter(user =>
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    )
 
     if (loading) {
         return (
@@ -84,7 +89,7 @@ export default function UsersContent() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Total Users</CardTitle>
-                        <CardDescription>Active users on the platform</CardDescription>
+                        <CardDescription>All registered users</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p className="text-3xl font-bold">{users.length}</p>
@@ -94,7 +99,7 @@ export default function UsersContent() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Active Users</CardTitle>
-                        <CardDescription>Currently enrolled in courses</CardDescription>
+                        <CardDescription>Users with active status</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p className="text-3xl font-bold">{activeUsers.length}</p>
@@ -104,7 +109,7 @@ export default function UsersContent() {
                 <Card>
                     <CardHeader>
                         <CardTitle>New Users</CardTitle>
-                        <CardDescription>Joined this month</CardDescription>
+                        <CardDescription>Joined in the last month</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p className="text-3xl font-bold">{newUsers.length}</p>
@@ -118,6 +123,15 @@ export default function UsersContent() {
                     <CardDescription>Manage and monitor user activities</CardDescription>
                 </CardHeader>
                 <CardContent>
+                    <div className="flex items-center mb-4">
+                        <Input
+                            placeholder="Search users..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="max-w-sm mr-4"
+                        />
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                    </div>
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -126,13 +140,21 @@ export default function UsersContent() {
                                 <TableHead>Enrolled Courses</TableHead>
                                 <TableHead>Join Date</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead>Actions</TableHead>
+                              
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {users.map((user) => (
+                            {filteredUsers.map((user) => (
                                 <TableRow key={user._id}>
-                                    <TableCell className="font-medium">{user.name}</TableCell>
+                                    <TableCell className="font-medium">
+                                        <div className="flex items-center">
+                                            <Avatar className="h-8 w-8 mr-2">
+                                                <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${user.name}`} alt={user.name} />
+                                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            {user.name}
+                                        </div>
+                                    </TableCell>
                                     <TableCell>{user.email}</TableCell>
                                     <TableCell>{user.enrolledCourses}</TableCell>
                                     <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
@@ -143,11 +165,7 @@ export default function UsersContent() {
                                             {user.status}
                                         </span>
                                     </TableCell>
-                                    <TableCell>
-                                        <Button variant="ghost" size="sm">
-                                            View Details
-                                        </Button>
-                                    </TableCell>
+                                    
                                 </TableRow>
                             ))}
                         </TableBody>
