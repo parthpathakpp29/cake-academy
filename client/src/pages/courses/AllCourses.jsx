@@ -1,59 +1,71 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { courseService } from "@/services/api"
-import { toast } from "sonner"
-import { Loader2, Search, BookOpen, Clock, Tag, ChevronRight } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { courseService } from "@/services/api";
+import { toast } from "sonner";
+import { Loader2, Search, BookOpen, Clock, Tag, ChevronRight } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import debounce from 'lodash/debounce' // For debouncing search input
 
 const AllCourses = () => {
-    const [courses, setCourses] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [searchTerm, setSearchTerm] = useState('')
-    const [selectedCategory, setSelectedCategory] = useState('all')
-    const navigate = useNavigate()
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const navigate = useNavigate();
 
+    // Fetch courses
     const fetchCourses = useCallback(async () => {
         try {
-            const response = await courseService.getAllCourses()
-            setCourses(response.courses)
+            const response = await courseService.getAllCourses();
+            setCourses(response.courses);
         } catch (error) {
-            toast.error("Failed to fetch courses")
+            toast.error("Failed to fetch courses");
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    }, [])
+    }, []);
 
+    // Load courses when component mounts
     useEffect(() => {
-        fetchCourses()
-    }, [fetchCourses])
+        fetchCourses();
+    }, [fetchCourses]);
 
-    const filteredCourses = courses.filter(course => 
-        course.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        (selectedCategory === 'all' || course.category === selectedCategory)
-    )
+    // Debounced search handler
+    const debouncedSearch = useMemo(
+        () => debounce((query) => setSearchTerm(query), 300),
+        []
+    );
 
-    const categories = React.useMemo(() => {
-        const uniqueCategories = new Set(courses
-            .map(course => course.category)
-            .filter(Boolean)
-        )
-        return ['all', ...uniqueCategories]
-    }, [courses])
+    // Filter courses based on search and category
+    const filteredCourses = useMemo(() => {
+        return courses.filter(course =>
+            course.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            (selectedCategory === 'all' || course.category === selectedCategory)
+        );
+    }, [courses, searchTerm, selectedCategory]);
 
+    // Categories
+    const categories = useMemo(() => {
+        const uniqueCategories = new Set(courses.map(course => course.category).filter(Boolean));
+        return ['all', ...uniqueCategories];
+    }, [courses]);
+
+    // Format category names
     const formatCategory = useCallback((category) => {
         if (!category) return '';
         return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
-    }, [])
+    }, []);
 
+    // Loader when courses are loading
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[70vh]">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
-        )
+        );
     }
 
     return (
@@ -72,8 +84,7 @@ const AllCourses = () => {
                         <Input
                             placeholder="Search courses..."
                             className="pl-10"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => debouncedSearch(e.target.value)} // Debounced search
                         />
                     </div>
                     <div className="flex gap-2 overflow-x-auto pb-2">
@@ -103,8 +114,8 @@ const AllCourses = () => {
                 )}
             </div>
         </div>
-    )
-}
+    );
+};
 
 const CourseCard = React.memo(({ course, navigate, formatCategory }) => (
     <Card className="group hover:shadow-xl transition-all duration-300 overflow-hidden">
@@ -146,7 +157,7 @@ const CourseCard = React.memo(({ course, navigate, formatCategory }) => (
                         ₹{course.price || 0}
                     </span>
                 </div>
-                <Button 
+                <Button
                     onClick={() => navigate(`/courses/${course._id}`)}
                     className="group-hover:translate-x-1 transition-transform"
                 >
@@ -156,8 +167,8 @@ const CourseCard = React.memo(({ course, navigate, formatCategory }) => (
             </div>
         </CardContent>
     </Card>
-))
+));
 
-CourseCard.displayName = 'CourseCard'
+CourseCard.displayName = 'CourseCard';
 
-export default AllCourses
+export default AllCourses;

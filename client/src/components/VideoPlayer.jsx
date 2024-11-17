@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Loader2, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react'
 
-const VideoPlayer = ({ url, poster, onReady }) => {
+export default function VideoPlayer({ url, poster, onReady }) {
   const videoRef = useRef(null)
   const playerRef = useRef(null)
   const [playerState, setPlayerState] = useState({
@@ -145,5 +145,3 @@ const VideoPlayer = ({ url, poster, onReady }) => {
     </div>
   )
 }
-
-export default VideoPlayer

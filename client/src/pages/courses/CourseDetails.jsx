@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from "sonner"
 import { Loader2, Play, Phone, Mail, MapPin, Users, Award } from 'lucide-react'
@@ -16,87 +16,84 @@ export default function CourseDetails() {
   const [loading, setLoading] = useState(true)
   const [isEnrolled, setIsEnrolled] = useState(false)
 
-  useEffect(() => {
-    const fetchCourseDetails = async () => {
-      try {
-        const response = await courseService.getCourseById(id)
-        setCourse(response.course)
-        const enrollmentStatus = await courseService.checkEnrollment(id)
-        setIsEnrolled(enrollmentStatus.isEnrolled)
-      } catch (error) {
-        toast.error("Failed to fetch course details")
-        navigate('/courses')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (id) {
-      fetchCourseDetails()
+  const fetchCourseDetails = useCallback(async () => {
+    if (!id) return
+    try {
+      setLoading(true)
+      const response = await courseService.getCourseById(id)
+      setCourse(response.course)
+      const enrollmentStatus = await courseService.checkEnrollment(id)
+      setIsEnrolled(enrollmentStatus.isEnrolled)
+    } catch (error) {
+      toast.error("Failed to fetch course details")
+      navigate('/courses')
+    } finally {
+      setLoading(false)
     }
   }, [id, navigate])
 
+  useEffect(() => {
+    fetchCourseDetails()
+  }, [fetchCourseDetails])
+
   const handleStartCourse = async () => {
-    if (course?._id) {
-      if (isEnrolled) {
-        navigate(`/courses/${course._id}/lecture/0`)
-      } else {
-        try {
-          const orderResponse = await courseService.createOrder(course._id)
-          if (!orderResponse.success || !orderResponse.order) {
-            throw new Error("Failed to create order")
-          }
-          
-          const options = {
-            key: "rzp_test_eB0p0Uq4Lgfu8W", // Replace with your actual Razorpay key
-            amount: orderResponse.order.amount,
-            currency: "INR",
-            name: "Your Company Name",
-            description: `Enrollment for ${course.title}`,
-            order_id: orderResponse.order.id,
-            handler: async function (response) {
-              try {
-                await courseService.verifyPayment({
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_signature: response.razorpay_signature,
-                  courseId: course._id,
-                  amount: orderResponse.order.amount,
-                })
-                toast.success("Payment successful! You can now access the course.")
-                setIsEnrolled(true)
-              } catch (error) {
-                toast.error("Payment verification failed. Please contact support.")
-              }
-            },
-            prefill: {
-              name: "John Doe",
-              email: "john@example.com",
-              contact: "9999999999"
-            },
-            theme: {
-              color: "#3399cc"
-            }
-          };
-          const rzp = new window.Razorpay(options);
-          rzp.open();
-        } catch (error) {
-          console.error("Payment error:", error)
-          toast.error("Failed to process payment. Please try again.")
-        }
-      }
-    } else {
+    if (!course?._id) {
       toast.error("Course not available")
+      return
+    }
+
+    if (isEnrolled) {
+      navigate(`/courses/${course._id}/lecture/0`)
+      return
+    }
+
+    try {
+      const orderResponse = await courseService.createOrder(course._id)
+      if (!orderResponse.success || !orderResponse.order) {
+        throw new Error("Failed to create order")
+      }
+      
+      const options = {
+        key: "rzp_test_eB0p0Uq4Lgfu8W", // Replace with your actual Razorpay key
+        amount: orderResponse.order.amount,
+        currency: "INR",
+        name: "Your Company Name",
+        description: `Enrollment for ${course.title}`,
+        order_id: orderResponse.order.id,
+        handler: async function (response) {
+          try {
+            await courseService.verifyPayment({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              courseId: course._id,
+              amount: orderResponse.order.amount,
+            })
+            toast.success("Payment successful! You can now access the course.")
+            setIsEnrolled(true)
+          } catch (error) {
+            toast.error("Payment verification failed. Please contact support.")
+          }
+        },
+        prefill: {
+          name: "John Doe",
+          email: "john@example.com",
+          contact: "9999999999"
+        },
+        theme: {
+          color: "#3399cc"
+        }
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error("Payment error:", error)
+      toast.error("Failed to process payment. Please try again.")
     }
   }
 
-  if (loading) {
-    return <LoadingState />
-  }
-
-  if (!course) {
-    return <NotFoundState />
-  }
+  if (loading) return <LoadingState />
+  if (!course) return <NotFoundState />
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -216,9 +213,9 @@ function CourseSidebar({ course, handleStartCourse, isEnrolled }) {
           </div>
           {isEnrolled && (
             <>
-              <Progress value={33} className="w-full" />
+              
               <p className="text-sm text-gray-600">
-                <strong>33% complete</strong> - Resume your learning journey
+               Resume your learning journey
               </p>
             </>
           )}
@@ -277,18 +274,16 @@ function HelpSection() {
 }
 
 function ContactItem({ href, icon, text }) {
-  if (href) {
-    return (
-      <a href={href} className="flex items-center space-x-3 text-gray-600 hover:text-primary transition-colors">
-        {icon}
-        <span>{text}</span>
-      </a>
-    )
-  }
-  return (
+  const content = (
     <div className="flex items-center space-x-3 text-gray-600">
       {icon}
       <span>{text}</span>
     </div>
   )
+
+  return href ? (
+    <a href={href} className="hover:text-primary transition-colors">
+      {content}
+    </a>
+  ) : content
 }

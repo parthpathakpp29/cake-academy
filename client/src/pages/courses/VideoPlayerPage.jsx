@@ -8,7 +8,7 @@ import { ChevronLeft, ChevronRight, Play, BookOpen, CheckCircle } from 'lucide-r
 import { toast } from 'sonner'
 import VideoPlayer from '@/components/VideoPlayer'
 
-const VideoPlayerPage = () => {
+export default function VideoPlayerPage() {
   const { courseId, lectureIndex = '0' } = useParams()
   const navigate = useNavigate()
   const [course, setCourse] = useState(null)
@@ -51,7 +51,7 @@ const VideoPlayerPage = () => {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h2 className="text-3xl font-bold text-gray-800">Lecture Not Found</h2>
-        <Button onClick={() => navigate('/courses')} className="mt-6 bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => navigate('/courses')} className="mt-6">
           Back to Courses
         </Button>
       </div>
@@ -106,14 +106,14 @@ const VideoPlayerPage = () => {
                     }}
                     className={`w-full text-left p-3 rounded-lg flex items-center space-x-3 transition-colors ${
                       currentLectureIndex === index
-                        ? 'bg-black text-white'
-                        : 'hover:bg-blue-50'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-secondary'
                     }`}
                   >
                     {lecture.completed ? (
-                      <CheckCircle className={`h-5 w-5 ${currentLectureIndex === index ? 'text-white' : 'text-green-500'}`} />
+                      <CheckCircle className={`h-5 w-5 ${currentLectureIndex === index ? 'text-primary-foreground' : 'text-green-500'}`} />
                     ) : (
-                      <Play className={`h-5 w-5 ${currentLectureIndex === index ? 'text-white' : 'text-black'}`} />
+                      <Play className={`h-5 w-5 ${currentLectureIndex === index ? 'text-primary-foreground' : 'text-primary'}`} />
                     )}
                     <span className="text-sm flex-1">{lecture.title}</span>
                     <span className="text-xs">{lecture.duration}</span>
@@ -143,5 +143,3 @@ const VideoPlayerPage = () => {
     </div>
   )
 }
-
-export default VideoPlayerPage

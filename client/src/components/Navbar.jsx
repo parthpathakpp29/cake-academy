@@ -9,7 +9,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ModeToggle } from "./mode-toggle"
+
 import Logo from '../assets/logo3.png'
 import { useAuth } from "@/context/AuthContext"
 import Profile from "./Profile"
@@ -57,7 +57,7 @@ export default function Navbar() {
                     }
 
 
-                    <ModeToggle />
+              
                 </div>
 
                 {/* Mobile Navigation */}
