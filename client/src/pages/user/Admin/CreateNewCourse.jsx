@@ -13,53 +13,69 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { courseSchema } from "@/utils/validations"
 import { courseService } from "@/services/api"
 
-const ThumbnailUpload = ({ value, onChange }) => (
-  <div
-    className="border-2 border-dashed rounded-lg p-4 hover:border-gray-400 transition-colors cursor-pointer"
-    onClick={() => document.getElementById('thumbnail').click()}
-  >
-    {value ? (
-      <div className="relative">
-        <img
-          src={URL.createObjectURL(value)}
-          alt="Course thumbnail"
-          className="w-full h-48 object-cover rounded-lg"
-        />
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="absolute bottom-2 right-2"
-          onClick={(e) => {
-            e.stopPropagation()
-            onChange(null)
-          }}
-        >
-          <X className="h-4 w-4 mr-1" />
-          Remove
-        </Button>
-      </div>
-    ) : (
-      <div className="flex flex-col items-center justify-center h-48 text-gray-500">
-        <ImageIcon className="h-12 w-12 mb-2" />
-        <p className="text-sm">Click to upload course thumbnail</p>
-        <p className="text-xs text-gray-400 mt-1">Recommended size: 1280x720px</p>
-      </div>
-    )}
-    <input
-      id="thumbnail"
-      type="file"
-      accept="image/*"
-      className="hidden"
-      onChange={(e) => {
-        const file = e.target.files?.[0]
-        if (file) {
-          onChange(file)
-        }
-      }}
-    />
-  </div>
-)
+const ThumbnailUpload = ({ value, onChange }) => {
+  const [previewUrl, setPreviewUrl] = useState(null)
+
+  const handleFileChange = (file) => {
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result)
+      }
+      reader.readAsDataURL(file)
+      onChange(file)
+    } else {
+      setPreviewUrl(null)
+      onChange(null)
+    }
+  }
+
+  return (
+    <div
+      className="border-2 border-dashed rounded-lg p-4 hover:border-gray-400 transition-colors cursor-pointer"
+      onClick={() => document.getElementById('thumbnail').click()}
+    >
+      {previewUrl ? (
+        <div className="relative">
+          <img
+            src={previewUrl}
+            alt="Course thumbnail"
+            className="w-full h-48 object-cover rounded-lg"
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="absolute bottom-2 right-2"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleFileChange(null)
+            }}
+          >
+            <X className="h-4 w-4 mr-1" />
+            Remove
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-48 text-gray-500">
+          <ImageIcon className="h-12 w-12 mb-2" />
+          <p className="text-sm">Click to upload course thumbnail</p>
+          <p className="text-xs text-gray-400 mt-1">Recommended size: 400x320px</p>
+        </div>
+      )}
+      <input
+        id="thumbnail"
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          handleFileChange(file)
+        }}
+      />
+    </div>
+  )
+}
 
 const LectureField = ({ index, remove, control }) => (
   <div key={index} className="p-4 border rounded-lg">

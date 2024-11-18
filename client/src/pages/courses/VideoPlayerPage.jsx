@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { courseService } from '@/services/api'
 import { Button } from '@/components/ui/button'
@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress'
 import { ChevronLeft, ChevronRight, Play, BookOpen, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import VideoPlayer from '@/components/VideoPlayer'
+import { useAuth } from '@/context/AuthContext'
 
 export default function VideoPlayerPage() {
   const { courseId, lectureIndex = '0' } = useParams()
@@ -14,22 +15,73 @@ export default function VideoPlayerPage() {
   const [course, setCourse] = useState(null)
   const [currentLectureIndex, setCurrentLectureIndex] = useState(parseInt(lectureIndex))
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+  const videoContainerRef = useRef(null)
 
   const fetchCourse = useCallback(async () => {
     try {
       const response = await courseService.getCourseById(courseId)
       setCourse(response.course)
+      
+      // Check enrollment only for non-admin users
+      if (user.role !== 1 && response.course.instructor !== user._id) {
+        const enrollmentStatus = await courseService.checkEnrollment(courseId)
+        if (!enrollmentStatus.isEnrolled) {
+          toast.error("You are not enrolled in this course")
+          navigate(`/courses/${courseId}`)
+          return
+        }
+      }
     } catch (error) {
       toast.error('Failed to load course content')
       navigate('/courses')
     } finally {
       setLoading(false)
     }
-  }, [courseId, navigate])
+  }, [courseId, navigate, user])
 
   useEffect(() => {
     fetchCourse()
   }, [fetchCourse])
+
+  useEffect(() => {
+    const preventRightClick = (e) => e.preventDefault()
+    const preventKeyboardShortcuts = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C' || e.key === 'j' || e.key === 'J' || e.key === 's' || e.key === 'S' || e.key === 'u' || e.key === 'U' || e.key === 'p' || e.key === 'P')) {
+        e.preventDefault()
+      }
+    }
+
+    document.addEventListener('contextmenu', preventRightClick)
+    document.addEventListener('keydown', preventKeyboardShortcuts)
+
+    return () => {
+      document.removeEventListener('contextmenu', preventRightClick)
+      document.removeEventListener('keydown', preventKeyboardShortcuts)
+    }
+  }, [])
+
+  useEffect(() => {
+    const blurContent = () => {
+      if (videoContainerRef.current) {
+        videoContainerRef.current.style.filter = 'blur(20px)'
+      }
+    }
+
+    const unblurContent = () => {
+      if (videoContainerRef.current) {
+        videoContainerRef.current.style.filter = 'none'
+      }
+    }
+
+    window.addEventListener('blur', blurContent)
+    window.addEventListener('focus', unblurContent)
+
+    return () => {
+      window.removeEventListener('blur', blurContent)
+      window.removeEventListener('focus', unblurContent)
+    }
+  }, [])
 
   const handleNavigation = useCallback((direction) => {
     const newIndex = direction === 'next' ? currentLectureIndex + 1 : currentLectureIndex - 1
@@ -66,8 +118,11 @@ export default function VideoPlayerPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <div className="rounded-lg overflow-hidden shadow-lg">
+            <div ref={videoContainerRef} className="rounded-lg overflow-hidden shadow-lg relative">
               <VideoPlayer url={currentLecture.videoUrl} poster={course.thumbnail?.url} />
+              <div className="absolute top-2 left-2 text-white text-sm bg-black bg-opacity-50 p-1 rounded">
+                {user.name} - {user.email}
+              </div>
             </div>
 
             <div className="bg-white rounded-lg shadow-lg p-6">

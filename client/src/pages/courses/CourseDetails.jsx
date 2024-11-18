@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { courseService } from "@/services/api"
+import { useAuth } from '@/context/AuthContext'
 
 export default function CourseDetails() {
   const { id } = useParams()
@@ -15,6 +15,7 @@ export default function CourseDetails() {
   const [course, setCourse] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isEnrolled, setIsEnrolled] = useState(false)
+  const { user } = useAuth()
 
   const fetchCourseDetails = useCallback(async () => {
     if (!id) return
@@ -42,7 +43,7 @@ export default function CourseDetails() {
       return
     }
 
-    if (isEnrolled) {
+    if (isEnrolled || (user.role === 1) || (course.instructor === user._id)) {
       navigate(`/courses/${course._id}/lecture/0`)
       return
     }
@@ -54,7 +55,7 @@ export default function CourseDetails() {
       }
       
       const options = {
-        key: "rzp_test_eB0p0Uq4Lgfu8W", // Replace with your actual Razorpay key
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: orderResponse.order.amount,
         currency: "INR",
         name: "Your Company Name",
@@ -76,9 +77,9 @@ export default function CourseDetails() {
           }
         },
         prefill: {
-          name: "John Doe",
-          email: "john@example.com",
-          contact: "9999999999"
+          name: user.name,
+          email: user.email,
+          contact: ""
         },
         theme: {
           color: "#3399cc"
@@ -97,7 +98,7 @@ export default function CourseDetails() {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <MainContent course={course} handleStartCourse={handleStartCourse} isEnrolled={isEnrolled} />
+      <MainContent course={course} handleStartCourse={handleStartCourse} isEnrolled={isEnrolled} user={user} />
     </div>
   )
 }
@@ -128,22 +129,24 @@ function NotFoundState() {
   )
 }
 
-function MainContent({ course, handleStartCourse, isEnrolled }) {
+function MainContent({ course, handleStartCourse, isEnrolled, user }) {
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-12">
-          <Curriculum lectures={course.lectures} isEnrolled={isEnrolled} />
+          <Curriculum lectures={course.lectures} isEnrolled={isEnrolled} user={user} course={course} />
         </div>
         <div className="lg:col-span-1">
-          <CourseSidebar course={course} handleStartCourse={handleStartCourse} isEnrolled={isEnrolled} />
+          <CourseSidebar course={course} handleStartCourse={handleStartCourse} isEnrolled={isEnrolled} user={user} />
         </div>
       </div>
     </div>
   )
 }
 
-function Curriculum({ lectures, isEnrolled }) {
+function Curriculum({ lectures, isEnrolled, user, course }) {
+  const canAccessContent = isEnrolled || user.role === 1 || course.instructor === user._id
+
   return (
     <section className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex justify-between items-center mb-6">
@@ -180,7 +183,7 @@ function Curriculum({ lectures, isEnrolled }) {
             <AccordionContent className="pt-2 pb-4">
               <div className="pl-12">
                 <p className="text-gray-600">{lecture.description || 'No description available'}</p>
-                {!isEnrolled && (
+                {!canAccessContent && (
                   <p className="text-sm text-primary mt-2">Enroll in the course to access this lesson</p>
                 )}
               </div>
@@ -192,7 +195,9 @@ function Curriculum({ lectures, isEnrolled }) {
   )
 }
 
-function CourseSidebar({ course, handleStartCourse, isEnrolled }) {
+function CourseSidebar({ course, handleStartCourse, isEnrolled, user }) {
+  const canAccessContent = isEnrolled || user.role === 1 || course.instructor === user._id
+
   return (
     <Card className="sticky top-8">
       <CardContent className="p-6 space-y-6">
@@ -211,20 +216,17 @@ function CourseSidebar({ course, handleStartCourse, isEnrolled }) {
               {course.discountPercentage ? `${course.discountPercentage}% OFF` : 'Full Price'}
             </Badge>
           </div>
-          {isEnrolled && (
-            <>
-              
-              <p className="text-sm text-gray-600">
-               Resume your learning journey
-              </p>
-            </>
+          {canAccessContent && (
+            <p className="text-sm text-gray-600">
+              Resume your learning journey
+            </p>
           )}
           <Button 
             className="w-full" 
             size="lg"
             onClick={handleStartCourse}
           >
-            {isEnrolled ? 'Continue Learning' : 'Enroll Now'}
+            {canAccessContent ? 'Continue Learning' : 'Enroll Now'}
           </Button>
           <p className="text-center text-sm text-gray-500">
             30-day money-back guarantee
