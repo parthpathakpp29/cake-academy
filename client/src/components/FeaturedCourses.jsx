@@ -1,104 +1,76 @@
 import { motion } from "framer-motion"
-import { Clock, GraduationCap, Star, Users } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useNavigate } from "react-router-dom"
+import Featured1 from '@/assets/featured1.avif'
+import Featured2 from '@/assets/featured2.avif'
+import Featured3 from '@/assets/featured3.avif'
 
 const featuredCourses = [
     {
         id: 1,
         title: "Artisan Bread Making",
         description: "Learn the art of crafting delicious artisan breads, from crusty baguettes to rustic sourdough.",
-        price: "₹999",
-        image: "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&q=80&w=2070",
-        duration: "8 weeks",
+        image: Featured1,
+       
     },
     {
         id: 2,
         title: "French Pastry Mastery",
         description: "Master the techniques of creating exquisite French pastries, from croissants to éclairs.",
-        price: "₹999",
-        image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&q=80&w=1989",
-        duration: "10 weeks",
+        image: Featured2,
+    
     },
     {
         id: 3,
         title: "Cake Decorating 101",
         description: "Discover the secrets of professional cake decorating, from basic techniques to advanced designs.",
-        price: "₹999",
-        image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=1972",
-        duration: "6 weeks",
-
+        image: Featured3,
     },
 ]
 
 export default function FeaturedCourses() {
+  const navigate = useNavigate()
+
     return (
         <section className="py-24 bg-gradient-to-b from-background to-muted/50">
             <div className="container px-4 md:px-6">
-                <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                    <div className="space-y-2">
-                        <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
-                            Featured Courses
-                        </div>
-                        <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Master the Art of Baking</h2>
-                        <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                            Choose from our most popular courses and start your culinary journey today
-                        </p>
-                    </div>
+                <div className="text-center mb-12">
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">Master the Art of Baking</h2>
+                    <p className="mt-4 text-lg text-muted-foreground max-w-[700px] mx-auto">
+                        Choose from our most popular courses and start your culinary journey today.
+                    </p>
                 </div>
-                <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-3 md:gap-12 lg:gap-16 mt-16">
-                    {featuredCourses.map((course, index) => (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                    {featuredCourses.map((course) => (
                         <motion.div
                             key={course.id}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            transition={{
-                                duration: 0.5,
-                                delay: index * 0.2,
-                                ease: "easeOut",
-                            }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, ease: "easeOut" }}
                         >
-                            <Card className="group relative overflow-hidden">
-                                <CardHeader className="p-0">
-                                    <div className="relative">
-                                        <motion.div
-                                            whileHover={{ scale: 1.05 }}
-                                            transition={{ duration: 0.2 }}
-                                            className="aspect-[4/3] overflow-hidden"
-                                        >
-                                            <img
-                                                src={course.image}
-                                                alt={course.title}
-                                                className="object-cover w-full h-full transition-transform group-hover:scale-105"
-                                            />
-                                        </motion.div>
-
-                                    </div>
+                            <Card className="group hover:shadow-lg transition-shadow">
+                                <CardHeader className="p-0 relative">
+                                    <img
+                                        src={course.image}
+                                        alt={course.title}
+                                        loading="lazy"
+                                        className="w-full h-48 object-cover rounded-t-md"
+                                    />
                                 </CardHeader>
-                                <CardContent className="grid gap-2.5 p-4">
-                                    <CardTitle className="line-clamp-1">{course.title}</CardTitle>
-                                    <CardDescription className="line-clamp-2">
-                                        {course.description}
-                                    </CardDescription>
-                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                        <div className="flex items-center gap-1">
-                                            <Users className="w-4 h-4" />
-                                            <span>{course.students} students</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Clock className="w-4 h-4" />
-                                            <span>{course.duration}</span>
-                                        </div>
+                                <CardContent className="p-4">
+                                    <CardTitle>{course.title}</CardTitle>
+                                    <CardDescription>{course.description}</CardDescription>
+                                    <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
                                     </div>
                                 </CardContent>
-                                <CardFooter className="p-4 flex items-center justify-between border-t">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-2xl font-bold">{course.price}</span>
-                                    </div>
-                                    <Button className="group-hover:bg-primary">
-                                        <GraduationCap className="w-4 h-4 mr-2" />
-                                        Enroll More
+                                <CardFooter className="flex justify-between items-center p-4 border-t">
+                                    
+                                    <Button onClick = {() => navigate('/courses')}  variant="default" className="flex items-center gap-2">
+                                        <GraduationCap className="w-4 h-4" />
+                                        Explore More
                                     </Button>
                                 </CardFooter>
                             </Card>

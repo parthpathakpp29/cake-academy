@@ -5,6 +5,8 @@ import cors from "cors";
 import connectDB from "./config/db.js";
 import authRoutes from './routes/authRoute.js';
 import courseRoutes from './routes/courseRoute.js';
+import paymentRoutes from './routes/paymentRoute.js';
+
 import cloudinary from "cloudinary";
 
 
@@ -36,6 +38,7 @@ app.use(cors({
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/payment', paymentRoutes); 
 
 
 

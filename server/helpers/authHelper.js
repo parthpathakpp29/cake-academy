@@ -1,15 +1,23 @@
 import bcrypt from "bcrypt";
+import { createLogger } from "../utils/logger.js";
+
+const logger = createLogger('authHelper');
 
 export const hashPassword = async (password) => {
     try {
         const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-        return hashedPassword;
+        return await bcrypt.hash(password, saltRounds);
     } catch (error) {
-        console.log(error);
+        logger.error('Error hashing password:', error);
+        throw new Error('Password hashing failed');
     }
 };
 
 export const comparePassword = async (password, hashedPassword) => {
-    return bcrypt.compare(password, hashedPassword);
+    try {
+        return await bcrypt.compare(password, hashedPassword);
+    } catch (error) {
+        logger.error('Error comparing passwords:', error);
+        throw new Error('Password comparison failed');
+    }
 };

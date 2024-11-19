@@ -1,4 +1,3 @@
-// utils/cloudinary.js
 import cloudinary from "cloudinary";
 import { createError } from "./error.js";
 

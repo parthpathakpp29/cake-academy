@@ -1,173 +1,291 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { courseService } from "@/services/api";
-import { toast } from "sonner";
-import { Loader2, ChevronDown, Play, Phone, Mail, MapPin } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { toast } from "sonner"
+import { Loader2, Play, Phone, Mail, MapPin, Users, Award } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Badge } from "@/components/ui/badge"
+import { courseService } from "@/services/api"
+import { useAuth } from '@/context/AuthContext'
 
-const CourseDetails = () => {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const [course, setCourse] = useState(null);
-    const [loading, setLoading] = useState(true);
+export default function CourseDetails() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [course, setCourse] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [isEnrolled, setIsEnrolled] = useState(false)
+  const { user } = useAuth()
 
-    useEffect(() => {
-        const fetchCourseDetails = async () => {
-            try {
-                const response = await courseService.getCourseById(id);
-                setCourse(response.course);
-            } catch (error) {
-                toast.error("Failed to fetch course details");
-                navigate('/courses');
-            } finally {
-                setLoading(false);
-            }
-        };
+  const fetchCourseDetails = useCallback(async () => {
+    if (!id) return
+    try {
+      setLoading(true)
+      const response = await courseService.getCourseById(id)
+      setCourse(response.course)
+      const enrollmentStatus = await courseService.checkEnrollment(id)
+      setIsEnrolled(enrollmentStatus.isEnrolled)
+    } catch (error) {
+      toast.error("Failed to fetch course details")
+      navigate('/courses')
+    } finally {
+      setLoading(false)
+    }
+  }, [id, navigate])
 
-        fetchCourseDetails();
-    }, [id, navigate]);
+  useEffect(() => {
+    fetchCourseDetails()
+  }, [fetchCourseDetails])
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-[50vh]">
-                <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-        );
+  const handleStartCourse = async () => {
+    if (!course?._id) {
+      toast.error("Course not available")
+      return
     }
 
-    if (!course) {
-        return (
-            <div className="container mx-auto px-4 py-8 text-center">
-                <p>Course not found</p>
-                <Button onClick={() => navigate('/courses')}>Back to Courses</Button>
-            </div>
-        );
+    if (isEnrolled || (user.role === 1) || (course.instructor === user._id)) {
+      navigate(`/courses/${course._id}/lecture/0`)
+      return
     }
 
-    return (
-        <div className="bg-gray-50 min-h-screen">
-            <div className="bg-white py-8 mb-8 shadow-sm">
-                <div className="container mx-auto px-4">
-                    <nav className="flex items-center text-sm text-gray-500" aria-label="Breadcrumb">
-                        <Link to="/" className="hover:text-primary transition-colors">Home</Link>
-                        <span className="mx-2">›</span>
-                        <Link to="/courses" className="hover:text-primary transition-colors">Courses</Link>
-                        <span className="mx-2">›</span>
-                        <span>{course.title}</span>
-                    </nav>
-                </div>
-            </div>
+    try {
+      const orderResponse = await courseService.createOrder(course._id)
+      if (!orderResponse.success || !orderResponse.order) {
+        throw new Error("Failed to create order")
+      }
+      
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: orderResponse.order.amount,
+        currency: "INR",
+        name: "Your Company Name",
+        description: `Enrollment for ${course.title}`,
+        order_id: orderResponse.order.id,
+        handler: async function (response) {
+          try {
+            await courseService.verifyPayment({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              courseId: course._id,
+              amount: orderResponse.order.amount,
+            })
+            toast.success("Payment successful! You can now access the course.")
+            setIsEnrolled(true)
+          } catch (error) {
+            toast.error("Payment verification failed. Please contact support.")
+          }
+        },
+        prefill: {
+          name: user.name,
+          email: user.email,
+          contact: ""
+        },
+        theme: {
+          color: "#3399cc"
+        }
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error("Payment error:", error)
+      toast.error("Failed to process payment. Please try again.")
+    }
+  }
 
-            <div className="container mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-12">
-                        <section>
-                            <h1 className="text-3xl font-bold mb-4">{course.title}</h1>
-                            <p className="text-gray-600">{course.description}</p>
-                        </section>
+  if (loading) return <LoadingState />
+  if (!course) return <NotFoundState />
 
-                        <section>
-                            <h2 className="text-2xl font-bold mb-6">What You'll Learn</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {course.learningOutcomes?.map((outcome, index) => (
-                                    <div key={index} className="flex items-start space-x-3">
-                                        <div className="w-2 h-2 mt-2 rounded-full bg-primary flex-shrink-0" />
-                                        <p className="text-gray-600">{outcome}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      <MainContent course={course} handleStartCourse={handleStartCourse} isEnrolled={isEnrolled} user={user} />
+    </div>
+  )
+}
 
-                        <section>
-                            <h2 className="text-2xl font-bold mb-6">Requirements</h2>
-                            <ul className="space-y-4">
-                                {course.requirements?.map((requirement, index) => (
-                                    <li key={index} className="flex items-start space-x-3">
-                                        <div className="w-2 h-2 mt-2 rounded-full bg-primary flex-shrink-0" />
-                                        <p className="text-gray-600">{requirement}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
+function LoadingState() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="text-center space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+        <p className="text-gray-600">Loading course details...</p>
+      </div>
+    </div>
+  )
+}
 
-                        <section>
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold">Curriculum</h2>
-                                <span className="text-gray-500">{course.lectures?.length || 0} Lessons</span>
-                            </div>
-                            <Accordion type="single" collapsible className="space-y-4">
-                                {course.lectures?.map((lecture, index) => (
-                                    <AccordionItem key={index} value={`item-${index}`}>
-                                        <AccordionTrigger className="hover:no-underline">
-                                            <div className="flex items-center space-x-3">
-                                                <Play className="h-5 w-5 text-primary" />
-                                                <span className="font-medium">Lesson {index + 1}: {lecture.title}</span>
-                                            </div>
-                                        </AccordionTrigger>
-                                        <AccordionContent>
-                                            <p className="text-gray-600">{lecture.description || 'No description available'}</p>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                ))}
-                            </Accordion>
-                        </section>
-                    </div>
+function NotFoundState() {
+  const navigate = useNavigate()
+  return (
+    <div className="container mx-auto px-4 py-16 text-center">
+      <div className="max-w-md mx-auto space-y-4">
+        <h2 className="text-2xl font-bold">Course Not Found</h2>
+        <p className="text-gray-600">The course you're looking for doesn't exist or has been removed.</p>
+        <Button onClick={() => navigate('/courses')} className="mt-4">
+          Back to Courses
+        </Button>
+      </div>
+    </div>
+  )
+}
 
-                    <div className="lg:col-span-1">
-                        <Card className="sticky top-8">
-                            <CardContent className="p-6 space-y-6">
-                                <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
-                                    <img
-                                        src={course.thumbnail?.url || '/placeholder.svg?height=320&width=400'}
-                                        alt={course.title}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-
-                                <Button className="w-full" size="lg">
-                                    Join Course
-                                </Button>
-
-                                <div>
-                                    <h3 className="font-semibold text-lg mb-4">This Course Includes:</h3>
-                                    <ul className="space-y-3">
-                                        <li className="flex items-center text-gray-600">
-                                            <Play className="h-4 w-4 mr-2 text-primary" />
-                                            {course.lectures?.length || 0} Video Lessons
-                                        </li>
-                                        <li className="flex items-center text-gray-600">
-                                            <Phone className="h-4 w-4 mr-2 text-primary" />
-                                            Access on mobile, tablet and desktop
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <div className="bg-primary/10 rounded-lg p-6">
-                                    <h3 className="font-semibold text-lg mb-4">Have Any Questions?</h3>
-                                    <div className="space-y-4">
-                                        <a href="tel:+421914414257" className="flex items-center space-x-3 text-gray-600 hover:text-primary transition-colors">
-                                            <Phone className="h-5 w-5 text-primary" />
-                                            <span>(+421) 914 414 257</span>
-                                        </a>
-                                        <a href="mailto:support@domain.com" className="flex items-center space-x-3 text-gray-600 hover:text-primary transition-colors">
-                                            <Mail className="h-5 w-5 text-primary" />
-                                            <span>support@domain.com</span>
-                                        </a>
-                                        <div className="flex items-center space-x-3 text-gray-600">
-                                            <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
-                                            <span>JI. Sunset Road No 815, Kuta</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            </div>
+function MainContent({ course, handleStartCourse, isEnrolled, user }) {
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-12">
+          <Curriculum lectures={course.lectures} isEnrolled={isEnrolled} user={user} course={course} />
         </div>
-    );
-};
+        <div className="lg:col-span-1">
+          <CourseSidebar course={course} handleStartCourse={handleStartCourse} isEnrolled={isEnrolled} user={user} />
+        </div>
+      </div>
+    </div>
+  )
+}
 
-export default CourseDetails;
+function Curriculum({ lectures, isEnrolled, user, course }) {
+  const canAccessContent = isEnrolled || user.role === 1 || course.instructor === user._id
+
+  return (
+    <section className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="flex justify-between items-center mb-6">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold">Course Curriculum</h2>
+          <p className="text-gray-600">Master the fundamentals through structured lessons</p>
+        </div>
+        <div className="text-right">
+          <div className="text-2xl font-bold text-primary">{lectures?.length || 0}</div>
+          <div className="text-sm text-gray-600">Total Lessons</div>
+        </div>
+      </div>
+
+      <Accordion type="single" collapsible className="space-y-4">
+        {lectures?.map((lecture, index) => (
+          <AccordionItem 
+            key={index} 
+            value={`item-${index}`}
+            className="border rounded-lg px-4"
+          >
+            <AccordionTrigger className="hover:no-underline py-4">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
+                  <Play className="h-4 w-4 text-primary" />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium">Lesson {index + 1}: {lecture.title}</div>
+                  <div className="text-sm text-gray-500">
+                    {lecture.duration ? `${lecture.duration} mins` : 'Duration not specified'}
+                  </div>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 pb-4">
+              <div className="pl-12">
+                <p className="text-gray-600">{lecture.description || 'No description available'}</p>
+                {!canAccessContent && (
+                  <p className="text-sm text-primary mt-2">Enroll in the course to access this lesson</p>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </section>
+  )
+}
+
+function CourseSidebar({ course, handleStartCourse, isEnrolled, user }) {
+  const canAccessContent = isEnrolled || user.role === 1 || course.instructor === user._id
+
+  return (
+    <Card className="sticky top-8">
+      <CardContent className="p-6 space-y-6">
+        <div className="aspect-video rounded-xl overflow-hidden bg-gray-100 border">
+          <img
+            src={course.thumbnail?.url || '/placeholder.svg?height=320&width=400'}
+            alt={course.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <span className="text-3xl font-bold">₹{course.price || 0}</span>
+            <Badge variant="secondary" className="text-lg px-3 py-1">
+              {course.discountPercentage ? `${course.discountPercentage}% OFF` : 'Full Price'}
+            </Badge>
+          </div>
+          {canAccessContent && (
+            <p className="text-sm text-gray-600">
+              Resume your learning journey
+            </p>
+          )}
+          <Button 
+            className="w-full" 
+            size="lg"
+            onClick={handleStartCourse}
+          >
+            {canAccessContent ? 'Continue Learning' : 'Enroll Now'}
+          </Button>
+          <p className="text-center text-sm text-gray-500">
+            30-day money-back guarantee
+          </p>
+        </div>
+
+        <CourseFeatures lectures={course.lectures} totalDuration={course.totalDuration} />
+        <HelpSection />
+      </CardContent>
+    </Card>
+  )
+}
+
+function CourseFeatures({ lectures, totalDuration }) {
+  return (
+    <div className="space-y-4">
+      <h3 className="font-semibold text-lg">Course Features:</h3>
+      <ul className="space-y-3">
+        <FeatureItem icon={<Play className="h-5 w-5 mr-3 text-primary" />} text={`${lectures?.length || 0} Video lessons`} />
+        <FeatureItem icon={<Users className="h-5 w-5 mr-3 text-primary" />} text="Access on mobile and TV" />
+        <FeatureItem icon={<Award className="h-5 w-5 mr-3 text-primary" />} text="Certificate of completion" />
+      </ul>
+    </div>
+  )
+}
+
+function FeatureItem({ icon, text }) {
+  return (
+    <li className="flex items-center text-gray-600">
+      {icon}
+      {text}
+    </li>
+  )
+}
+
+function HelpSection() {
+  return (
+    <div className="bg-gray-50 rounded-xl p-6">
+      <h3 className="font-semibold text-lg mb-4">Need Help?</h3>
+      <div className="space-y-4">
+        <ContactItem href="tel:+421914414257" icon={<Phone className="h-5 w-5 text-primary" />} text="(+421) 914 414 257" />
+        <ContactItem href="mailto:support@domain.com" icon={<Mail className="h-5 w-5 text-primary" />} text="support@domain.com" />
+        <ContactItem icon={<MapPin className="h-5 w-5 text-primary flex-shrink-0" />} text="JI. Sunset Road No 815, Kuta" />
+      </div>
+    </div>
+  )
+}
+
+function ContactItem({ href, icon, text }) {
+  const content = (
+    <div className="flex items-center space-x-3 text-gray-600">
+      {icon}
+      <span>{text}</span>
+    </div>
+  )
+
+  return href ? (
+    <a href={href} className="hover:text-primary transition-colors">
+      {content}
+    </a>
+  ) : content
+}

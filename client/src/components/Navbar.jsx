@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
-import { ChefHat, Menu, ShoppingCart, X } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -9,7 +9,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ModeToggle } from "./mode-toggle"
+
 import Logo from '../assets/logo3.png'
 import { useAuth } from "@/context/AuthContext"
 import Profile from "./Profile"
@@ -57,7 +57,7 @@ export default function Navbar() {
                     }
 
 
-                    <ModeToggle />
+              
                 </div>
 
                 {/* Mobile Navigation */}
