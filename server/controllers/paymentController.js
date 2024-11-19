@@ -1,10 +1,13 @@
 import Razorpay from "razorpay";
 import Enrollment from "../models/enrollmentModel.js";
 import Course from "../models/courseModel.js";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const razorpay = new Razorpay({
-    key_id: 'rzp_test_eB0p0Uq4Lgfu8W',
-    key_secret: 'mCMxtv3pTb0j91AVKbaeb7So'
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
 export const createOrder = async (req, res) => {
