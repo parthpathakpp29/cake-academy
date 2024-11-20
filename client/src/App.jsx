@@ -12,6 +12,7 @@ import PrivacyPolicy from './pages/extra-pages/PrivacyPolicy';
 import AboutUs from './pages/extra-pages/AboutUs';
 import TermsAndConditions from './pages/extra-pages/TermsAndConditions';
 import RefundPolicy from './pages/extra-pages/RefundPolicy';
+import NotFound from './pages/NotFound';
 
 // Lazy load components
 const Hero = lazy(() => import('./components/Hero'));
@@ -64,7 +65,7 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/courses" element={<AllCourses />} />
-                <Route path="/courses/:id" element={<CourseDetails />} /> {/* Open for all */}
+                <Route path="/courses/:id" element={<CourseDetails />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/about-us" element={<AboutUs />} />
                 <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
@@ -83,8 +84,8 @@ function App() {
                   <Route path="/admin/courses/:id/edit" element={<EditCourse />} />
                 </Route>
 
-                {/* Catch-all redirect */}
-                <Route path="*" element={<Navigate to="/sign-in" replace />} />
+                {/* Not Found Route */}
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
             <Footer />
