@@ -7,9 +7,12 @@ const lectureSchema = new mongoose.Schema({
     },
     videoUrl: {
         type: String,
-        required: [true, "Lecture video is required"],
+        required: [true, "Lecture video URL is required"],
     },
-    videoPublicId: String,
+    videoKey: {
+        type: String,
+        required: [true, "Lecture video key is required"],
+    },
 });
 
 const courseSchema = new mongoose.Schema({
@@ -29,7 +32,7 @@ const courseSchema = new mongoose.Schema({
     },
     thumbnail: {
         url: String,
-        publicId: String,
+        key: String,
     },
     lectures: [lectureSchema],
     instructor: {

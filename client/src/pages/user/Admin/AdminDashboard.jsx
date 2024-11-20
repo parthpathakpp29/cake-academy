@@ -19,10 +19,12 @@ const SidebarContent = ({ activeSection, onSectionChange, onLogout, user }) => (
   <>
     <div className="p-6 border-b">
       <div className="flex items-center space-x-4">
-        <Avatar className="w-16 h-16">
-          <AvatarImage src={user?.avatar || "https://github.com/shadcn.png"} alt="Admin Avatar" />
-          <AvatarFallback>{user?.name?.charAt(0).toUpperCase()}</AvatarFallback>
-        </Avatar>
+      <Avatar className="w-16 h-16">
+  <AvatarImage src={user?.avatar} alt="Admin Avatar" />
+  <AvatarFallback className="bg-black text-white">
+    {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+  </AvatarFallback>
+</Avatar>
         <div>
           <h2 className="text-xl font-semibold">{user?.name}</h2>
           <p className="text-sm text-muted-foreground">Admin</p>

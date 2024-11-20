@@ -33,7 +33,7 @@ export default function VideoPlayer({ url, poster, onReady }) {
       fluid: true,
       responsive: true,
       poster: poster,
-      sources: [{ src: url, type: 'application/x-mpegURL' }]
+      sources: [{ src: url, type: 'video/mp4' }]
     })
 
     player.on('loadedmetadata', () => updatePlayerState({ duration: player.duration(), loading: false }))

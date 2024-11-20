@@ -175,14 +175,13 @@ function Curriculum({ lectures, isEnrolled, user, course }) {
                 <div className="text-left">
                   <div className="font-medium">Lesson {index + 1}: {lecture.title}</div>
                   <div className="text-sm text-gray-500">
-                    {lecture.duration ? `${lecture.duration} mins` : 'Duration not specified'}
+
                   </div>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="pt-2 pb-4">
               <div className="pl-12">
-                <p className="text-gray-600">{lecture.description || 'No description available'}</p>
                 {!canAccessContent && (
                   <p className="text-sm text-primary mt-2">Enroll in the course to access this lesson</p>
                 )}
@@ -267,9 +266,9 @@ function HelpSection() {
     <div className="bg-gray-50 rounded-xl p-6">
       <h3 className="font-semibold text-lg mb-4">Need Help?</h3>
       <div className="space-y-4">
-        <ContactItem href="tel:+421914414257" icon={<Phone className="h-5 w-5 text-primary" />} text="(+421) 914 414 257" />
-        <ContactItem href="mailto:support@domain.com" icon={<Mail className="h-5 w-5 text-primary" />} text="support@domain.com" />
-        <ContactItem icon={<MapPin className="h-5 w-5 text-primary flex-shrink-0" />} text="JI. Sunset Road No 815, Kuta" />
+         <ContactItem href="tel:+421914414257" icon={<Phone className="h-5 w-5 text-primary" />} text="(+91) 6289154719" />
+        <ContactItem href="professionalcakemakingclass@gmail.com" icon={<Mail className="h-5 w-5 text-primary" />} text="professionalcakemakingclass" />
+        <ContactItem icon={<MapPin className="h-5 w-5 text-primary flex-shrink-0" />} text="Kolkata" />
       </div>
     </div>
   )

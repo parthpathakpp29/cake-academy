@@ -1,8 +1,15 @@
 import { Link } from "react-router-dom";
 import { ChefHat } from "lucide-react";
 
-
 export default function Footer() {
+    // Define a mapping of display text to route paths
+    const policyLinks = [
+        { text: "About Us", path: "/about-us" },
+        { text: "Privacy Policy", path: "/privacy-policy" },
+        { text: "Refund Policy", path: "/refund-policy" },
+        { text: "Terms & Conditions", path: "/terms-and-conditions" }
+    ];
+
     return (
         <footer className="bg-muted/50 border-t">
             <div className="container px-4 py-16 md:py-24">
@@ -22,13 +29,13 @@ export default function Footer() {
                     <div className="space-y-4">
                         <h3 className="text-sm font-medium">Quick Links</h3>
                         <nav className="flex flex-col items-center space-y-2">
-                            {["Courses", "About Us", "Contact", "Blog"].map((text) => (
+                            {policyLinks.map((link) => (
                                 <Link
-                                    key={text}
-                                    to={`/${text.toLowerCase().replace(/\s+/g, "")}`}
+                                    key={link.text}
+                                    to={link.path}
                                     className="text-sm text-muted-foreground hover:text-primary transition-colors"
                                 >
-                                    {text}
+                                    {link.text}
                                 </Link>
                             ))}
                         </nav>
