@@ -1,57 +1,64 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { toast } from "sonner"
-import { Loader2, Play, Phone, Mail, MapPin, Users, Award } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Badge } from "@/components/ui/badge"
-import { courseService } from "@/services/api"
-import { useAuth } from '@/context/AuthContext'
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from "sonner";
+import { Loader2, Play, Phone, Mail, MapPin, Users, Award } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { courseService } from "@/services/api";
+import { useAuth } from '@/context/AuthContext';
 
 export default function CourseDetails() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [course, setCourse] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [isEnrolled, setIsEnrolled] = useState(false)
-  const { user } = useAuth()
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const { user } = useAuth();
 
   const fetchCourseDetails = useCallback(async () => {
-    if (!id) return
+    if (!id) return;
     try {
-      setLoading(true)
-      const response = await courseService.getCourseById(id)
-      setCourse(response.course)
-      const enrollmentStatus = await courseService.checkEnrollment(id)
-      setIsEnrolled(enrollmentStatus.isEnrolled)
+      setLoading(true);
+      const response = await courseService.getCourseById(id);
+      setCourse(response.course);
+      if (user) {
+        const enrollmentStatus = await courseService.checkEnrollment(id);
+        setIsEnrolled(enrollmentStatus.isEnrolled);
+      }
     } catch (error) {
-      toast.error("Failed to fetch course details")
-      navigate('/courses')
+      toast.error("Failed to fetch course details");
+      navigate('/courses');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [id, navigate])
+  }, [id, navigate, user]);
 
   useEffect(() => {
-    fetchCourseDetails()
-  }, [fetchCourseDetails])
+    fetchCourseDetails();
+  }, [fetchCourseDetails]);
 
   const handleStartCourse = async () => {
+    if (!user) {
+      navigate('/sign-in', { state: { from: `/courses/${id}` } });
+      return;
+    }
+
     if (!course?._id) {
-      toast.error("Course not available")
-      return
+      toast.error("Course not available");
+      return;
     }
 
     if (isEnrolled || (user.role === 1) || (course.instructor === user._id)) {
-      navigate(`/courses/${course._id}/lecture/0`)
-      return
+      navigate(`/courses/${course._id}/lecture/0`);
+      return;
     }
 
     try {
-      const orderResponse = await courseService.createOrder(course._id)
+      const orderResponse = await courseService.createOrder(course._id);
       if (!orderResponse.success || !orderResponse.order) {
-        throw new Error("Failed to create order")
+        throw new Error("Failed to create order");
       }
       
       const options = {
@@ -69,11 +76,11 @@ export default function CourseDetails() {
               razorpay_signature: response.razorpay_signature,
               courseId: course._id,
               amount: orderResponse.order.amount,
-            })
-            toast.success("Payment successful! You can now access the course.")
-            setIsEnrolled(true)
+            });
+            toast.success("Payment successful! You can now access the course.");
+            setIsEnrolled(true);
           } catch (error) {
-            toast.error("Payment verification failed. Please contact support.")
+            toast.error("Payment verification failed. Please contact support.");
           }
         },
         prefill: {
@@ -88,19 +95,19 @@ export default function CourseDetails() {
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
-      console.error("Payment error:", error)
-      toast.error("Failed to process payment. Please try again.")
+      console.error("Payment error:", error);
+      toast.error("Failed to process payment. Please try again.");
     }
-  }
+  };
 
-  if (loading) return <LoadingState />
-  if (!course) return <NotFoundState />
+  if (loading) return <LoadingState />;
+  if (!course) return <NotFoundState />;
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <MainContent course={course} handleStartCourse={handleStartCourse} isEnrolled={isEnrolled} user={user} />
     </div>
-  )
+  );
 }
 
 function LoadingState() {
@@ -111,11 +118,11 @@ function LoadingState() {
         <p className="text-gray-600">Loading course details...</p>
       </div>
     </div>
-  )
+  );
 }
 
 function NotFoundState() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   return (
     <div className="container mx-auto px-4 py-16 text-center">
       <div className="max-w-md mx-auto space-y-4">
@@ -126,7 +133,7 @@ function NotFoundState() {
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
 function MainContent({ course, handleStartCourse, isEnrolled, user }) {
@@ -141,11 +148,11 @@ function MainContent({ course, handleStartCourse, isEnrolled, user }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function Curriculum({ lectures, isEnrolled, user, course }) {
-  const canAccessContent = isEnrolled || user.role === 1 || course.instructor === user._id
+  const canAccessContent = isEnrolled || user?.role === 1 || course.instructor === user?._id;
 
   return (
     <section className="bg-white rounded-xl p-6 shadow-sm">
@@ -175,7 +182,7 @@ function Curriculum({ lectures, isEnrolled, user, course }) {
                 <div className="text-left">
                   <div className="font-medium">Lesson {index + 1}: {lecture.title}</div>
                   <div className="text-sm text-gray-500">
-
+                    {/* You can add more details about the lecture here */}
                   </div>
                 </div>
               </div>
@@ -185,17 +192,20 @@ function Curriculum({ lectures, isEnrolled, user, course }) {
                 {!canAccessContent && (
                   <p className="text-sm text-primary mt-2">Enroll in the course to access this lesson</p>
                 )}
+                {canAccessContent && (
+                  <p className="text-sm text-gray-600 mt-2">{lecture.description || 'No description available.'}</p>
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>
     </section>
-  )
+  );
 }
 
 function CourseSidebar({ course, handleStartCourse, isEnrolled, user }) {
-  const canAccessContent = isEnrolled || user.role === 1 || course.instructor === user._id
+  const canAccessContent = isEnrolled || user?.role === 1 || course.instructor === user?._id;
 
   return (
     <Card className="sticky top-8">
@@ -236,7 +246,7 @@ function CourseSidebar({ course, handleStartCourse, isEnrolled, user }) {
         <HelpSection />
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function CourseFeatures({ lectures, totalDuration }) {
@@ -249,7 +259,7 @@ function CourseFeatures({ lectures, totalDuration }) {
         <FeatureItem icon={<Award className="h-5 w-5 mr-3 text-primary" />} text="Certificate of completion" />
       </ul>
     </div>
-  )
+  );
 }
 
 function FeatureItem({ icon, text }) {
@@ -258,7 +268,7 @@ function FeatureItem({ icon, text }) {
       {icon}
       {text}
     </li>
-  )
+  );
 }
 
 function HelpSection() {
@@ -266,12 +276,12 @@ function HelpSection() {
     <div className="bg-gray-50 rounded-xl p-6">
       <h3 className="font-semibold text-lg mb-4">Need Help?</h3>
       <div className="space-y-4">
-         <ContactItem href="tel:+421914414257" icon={<Phone className="h-5 w-5 text-primary" />} text="(+91) 6289154719" />
-        <ContactItem href="professionalcakemakingclass@gmail.com" icon={<Mail className="h-5 w-5 text-primary" />} text="professionalcakemakingclass" />
+        <ContactItem href="tel:+916289154719" icon={<Phone className="h-5 w-5 text-primary" />} text="(+91) 6289154719" />
+        <ContactItem href="mailto:professionalcakemakingclass@gmail.com" icon={<Mail className="h-5 w-5 text-primary" />} text="professionalcakemakingclass@gmail.com" />
         <ContactItem icon={<MapPin className="h-5 w-5 text-primary flex-shrink-0" />} text="Kolkata" />
       </div>
     </div>
-  )
+  );
 }
 
 function ContactItem({ href, icon, text }) {
@@ -280,11 +290,11 @@ function ContactItem({ href, icon, text }) {
       {icon}
       <span>{text}</span>
     </div>
-  )
+  );
 
   return href ? (
     <a href={href} className="hover:text-primary transition-colors">
       {content}
     </a>
-  ) : content
+  ) : content;
 }

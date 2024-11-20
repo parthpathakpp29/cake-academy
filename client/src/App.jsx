@@ -57,23 +57,26 @@ function App() {
             <Navbar />
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
+                {/* Public Routes */}
                 <Route path="/" element={<HomeLayout />} />
                 <Route path="/sign-in" element={<SignIn />} />
                 <Route path="/sign-up" element={<SignUp />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/courses" element={<AllCourses />} />
-                <Route path="/courses/:id" element={<CourseDetails />} />
+                <Route path="/courses/:id" element={<CourseDetails />} /> {/* Open for all */}
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/about-us" element={<AboutUs />} />
                 <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                 <Route path="/refund-policy" element={<RefundPolicy />} />
-                
+
+                {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/courses/:courseId/lecture/:lectureIndex" element={<VideoPlayerPage />} />
                 </Route>
 
+                {/* Admin Routes */}
                 <Route element={<AdminRoute />}>
                   <Route path="/admin/dashboard" element={<AdminDashboard />} />
                   <Route path="/admin/courses/create" element={<CreateCourse />} />

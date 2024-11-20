@@ -1,29 +1,30 @@
-import { useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import { Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
+import React, { useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Separator } from "@/components/ui/separator"
-import { authService } from '@/services/api'
-import { useAuth } from '@/context/AuthContext'
-import { loginSchema } from '@/utils/validations'
-import { PasswordInput } from '@/components/PasswordInput'
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { authService } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
+import { loginSchema } from '@/utils/validations';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export default function SignIn() {
-    const navigate = useNavigate()
-    const { user, login } = useAuth()
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { user, login } = useAuth();
 
     useEffect(() => {
         if (user) {
-            navigate(user.role === 1 ? '/admin/dashboard' : '/dashboard', { replace: true })
+            const from = location.state?.from || (user.role === 1 ? '/admin/dashboard' : '/dashboard');
+            navigate(from, { replace: true });
         }
-    }, [user, navigate])
+    }, [user, navigate, location]);
 
     const form = useForm({
         resolver: zodResolver(loginSchema),
@@ -31,25 +32,25 @@ export default function SignIn() {
             email: '',
             password: '',
         },
-    })
+    });
 
     const onSubmit = async (data) => {
         try {
-            const response = await authService.signIn(data)
+            const response = await authService.signIn(data);
 
             if (response.success) {
-                login(response.user, response.token)
-                toast.success('Signed in successfully')
-                navigate(response.user.role === 1 ? '/admin/dashboard' : '/dashboard')
+                login(response.user, response.token);
+                toast.success('Signed in successfully');
+                const from = location.state?.from || (response.user.role === 1 ? '/admin/dashboard' : '/dashboard');
+                navigate(from);
             } else {
-                toast.error(response.message || 'Sign in failed')
+                toast.error(response.message || 'Sign in failed');
             }
         } catch (error) {
-            console.error(error)
-            toast.error(error.message || 'An error occurred during sign in')
+            console.error(error);
+            toast.error(error.message || 'An error occurred during sign in');
         }
-    }
-
+    };
 
     return (
         <div className="container mx-auto flex items-center justify-center min-h-screen px-4 py-10">
