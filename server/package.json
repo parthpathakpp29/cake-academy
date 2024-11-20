@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "main": "index.js","winston": "^3.17.0",
   "type": "module",
+  
   "scripts": {
   "dev": "nodemon index.js",
   "start": "node index.js",
-  "build": "npm rebuild bcrypt && npm install"
+  "build": "npm install",
+  "postinstall": "npm rebuild bcrypt --build-from-source"
 },
   "keywords": [],
   "author": "",
