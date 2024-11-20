@@ -1,8 +1,7 @@
 import courseModel from "../models/courseModel.js";
 import Enrollment from "../models/enrollmentModel.js";
-import { uploadThumbnail, uploadVideo } from "../utils/cloudinary.js";
+import { uploadFile, deleteFile, getSignedUrlForVideo } from "../utils/s3.js";
 import fs from 'fs/promises';
-import cloudinary from 'cloudinary';
 import { createError } from "../utils/error.js";
 
 
@@ -17,17 +16,17 @@ export const createCourse = async (req, res, next) => {
         }
 
         // Upload thumbnail
-        thumbnailResult = await uploadThumbnail(req.files.thumbnail[0]);
+        thumbnailResult = await uploadFile(req.files.thumbnail[0], "courses/thumbnails");
 
         // Process videos if present
         if (req.files.video) {
             lectureResults = await Promise.all(req.files.video.map(async (videoFile, index) => {
                 const lectureTitle = lectureTitles[index] || `Lecture ${index + 1}`;
-                const videoResult = await uploadVideo(videoFile, "temp", index + 1);
+                const videoResult = await uploadFile(videoFile, `courses/${req.user._id}/lectures`);
                 return {
                     title: lectureTitle,
-                    videoUrl: videoResult.playbackUrl || videoResult.url,
-                    videoPublicId: videoResult.publicId,
+                    videoUrl: videoResult.url,
+                    videoKey: videoResult.key,
                 };
             }));
         }
@@ -39,10 +38,10 @@ export const createCourse = async (req, res, next) => {
             price,
             thumbnail: {
                 url: thumbnailResult.url,
-                publicId: thumbnailResult.publicId,
+                key: thumbnailResult.key,
             },
             lectures: lectureResults,
-            instructor: req.user._id, // Assuming you have user authentication middleware
+            instructor: req.user._id,
         });
 
         // Clean up local files
@@ -58,18 +57,17 @@ export const createCourse = async (req, res, next) => {
         });
     } catch (error) {
         // Clean up uploaded files on error
-        if (thumbnailResult?.publicId) {
-            await cloudinary.v2.uploader.destroy(thumbnailResult.publicId);
+        if (thumbnailResult?.key) {
+            await deleteFile(thumbnailResult.key);
         }
         for (const lecture of lectureResults) {
-            if (lecture.videoPublicId) {
-                await cloudinary.v2.uploader.destroy(lecture.videoPublicId, { resource_type: "video" });
+            if (lecture.videoKey) {
+                await deleteFile(lecture.videoKey);
             }
         }
         next(error);
     }
 };
-
 export const getAllCourses = async (req, res, next) => {
     try {
         const courses = await courseModel
@@ -95,6 +93,13 @@ export const getCourseById = async (req, res, next) => {
         if (!course) {
             throw createError(404, "Course not found");
         }
+
+        // Generate signed URLs for video lectures
+        course.lectures = await Promise.all(course.lectures.map(async (lecture) => ({
+            ...lecture,
+            videoUrl: await getSignedUrlForVideo(lecture.videoKey)
+        })));
+
         res.status(200).json({
             success: true,
             message: "Course fetched successfully",
@@ -120,11 +125,11 @@ export const updateCourse = async (req, res, next) => {
 
         // Update thumbnail if provided
         if (req.files?.thumbnail) {
-            await cloudinary.v2.uploader.destroy(course.thumbnail.publicId);
-            const thumbnailResult = await uploadThumbnail(req.files.thumbnail[0]);
+            await deleteFile(course.thumbnail.key);
+            const thumbnailResult = await uploadFile(req.files.thumbnail[0], "courses/thumbnails");
             course.thumbnail = {
                 url: thumbnailResult.url,
-                publicId: thumbnailResult.publicId
+                key: thumbnailResult.key
             };
         }
 
@@ -132,16 +137,16 @@ export const updateCourse = async (req, res, next) => {
         if (req.files?.video) {
             // Delete old videos
             await Promise.all(course.lectures.map(lecture => 
-                cloudinary.v2.uploader.destroy(lecture.videoPublicId, { resource_type: 'video' })
+                deleteFile(lecture.videoKey)
             ));
 
             // Upload new videos
             const newLectures = await Promise.all(req.files.video.map(async (videoFile, index) => {
-                const videoResult = await uploadVideo(videoFile, course._id, index + 1);
+                const videoResult = await uploadFile(videoFile, `courses/${course._id}/lectures`);
                 return {
                     title: lectureTitles[index] || `Lecture ${index + 1}`,
-                    videoUrl: videoResult.playbackUrl || videoResult.url,
-                    videoPublicId: videoResult.publicId
+                    videoUrl: videoResult.url,
+                    videoKey: videoResult.key
                 };
             }));
 
@@ -167,14 +172,14 @@ export const deleteCourse = async (req, res, next) => {
             throw createError(404, "Course not found");
         }
 
-        // Delete thumbnail from Cloudinary
-        if (course.thumbnail.publicId) {
-            await cloudinary.v2.uploader.destroy(course.thumbnail.publicId);
+        // Delete thumbnail from S3
+        if (course.thumbnail.key) {
+            await deleteFile(course.thumbnail.key);
         }
 
-        // Delete all lecture videos from Cloudinary
+        // Delete all lecture videos from S3
         await Promise.all(course.lectures.map(lecture => 
-            cloudinary.v2.uploader.destroy(lecture.videoPublicId, { resource_type: 'video' })
+            deleteFile(lecture.videoKey)
         ));
 
         await courseModel.findByIdAndDelete(req.params.id);
