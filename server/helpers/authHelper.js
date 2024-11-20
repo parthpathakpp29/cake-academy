@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger('authHelper');
