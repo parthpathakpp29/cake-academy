@@ -8,6 +8,10 @@ import { Toaster } from 'sonner';
 import ProtectedRoute from './components/Routes/Protected-route';
 import AdminRoute from './components/Routes/Admin-Route';
 import { Loader2 } from 'lucide-react';
+import PrivacyPolicy from './pages/extra-pages/PrivacyPolicy';
+import AboutUs from './pages/extra-pages/AboutUs';
+import TermsAndConditions from './pages/extra-pages/TermsAndConditions';
+import RefundPolicy from './pages/extra-pages/RefundPolicy';
 
 // Lazy load components
 const Hero = lazy(() => import('./components/Hero'));
@@ -60,6 +64,10 @@ function App() {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/courses" element={<AllCourses />} />
                 <Route path="/courses/:id" element={<CourseDetails />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/about-us" element={<AboutUs />} />
+                <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                <Route path="/refund-policy" element={<RefundPolicy />} />
                 
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
