@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { courseService } from '@/services/api'
 import { Button } from '@/components/ui/button'
@@ -6,8 +6,10 @@ import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
 import { ChevronLeft, ChevronRight, Play, BookOpen, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import VideoPlayer from '@/components/VideoPlayer'
 import { useAuth } from '@/context/AuthContext'
+
+// Lazy load the VideoPlayer component
+const VideoPlayer = lazy(() => import('@/components/VideoPlayer'))
 
 export default function VideoPlayerPage() {
   const { courseId, lectureIndex = '0' } = useParams()
@@ -23,7 +25,6 @@ export default function VideoPlayerPage() {
       const response = await courseService.getCourseById(courseId)
       setCourse(response.course)
       
-      // Check enrollment only for non-admin users
       if (user.role !== 1 && response.course.instructor !== user._id) {
         const enrollmentStatus = await courseService.checkEnrollment(courseId)
         if (!enrollmentStatus.isEnrolled) {
@@ -47,7 +48,7 @@ export default function VideoPlayerPage() {
   useEffect(() => {
     const preventRightClick = (e) => e.preventDefault()
     const preventKeyboardShortcuts = (e) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C' || e.key === 'j' || e.key === 'J' || e.key === 's' || e.key === 'S' || e.key === 'u' || e.key === 'U' || e.key === 'p' || e.key === 'P')) {
+      if ((e.ctrlKey || e.metaKey) && ['c', 'j', 's', 'u', 'p'].includes(e.key.toLowerCase())) {
         e.preventDefault()
       }
     }
@@ -119,7 +120,9 @@ export default function VideoPlayerPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <div ref={videoContainerRef} className="rounded-lg overflow-hidden shadow-lg relative">
-              <VideoPlayer url={currentLecture.videoUrl} poster={course.thumbnail?.url} />
+              <Suspense fallback={<div>Loading video player...</div>}>
+                <VideoPlayer url={currentLecture.videoUrl} poster={course.thumbnail?.url} />
+              </Suspense>
               <div className="absolute top-2 left-2 text-white text-sm bg-black bg-opacity-50 p-1 rounded">
                 {user.name} - {user.email}
               </div>
