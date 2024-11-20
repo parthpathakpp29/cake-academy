@@ -42,7 +42,7 @@ const RefundPolicy = () => {
           <p className="text-gray-700">
             If you have any questions about this refund policy or would like to request a refund, 
             please contact our support team at <a href="mailto:support@cakemakingclass.com" 
-            className="text-blue-500 underline">support@cakemakingclass.com</a>.
+            className="text-blue-500 underline">professionalcakemakingclass@gmail.com</a>.
           </p>
         </section>
 
