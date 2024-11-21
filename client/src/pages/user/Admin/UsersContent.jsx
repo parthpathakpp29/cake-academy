@@ -72,7 +72,8 @@ export default function UsersContent() {
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.phone && user.phone.includes(searchTerm))
   )
 
   const activeUsers = users.filter(user => user.status === "Active")
@@ -84,7 +85,6 @@ export default function UsersContent() {
 
   return (
     <div className="space-y-6">
-
       <div className="grid gap-6 md:grid-cols-3">
         <UserCard title="Total Users" description="All registered users" value={users.length} />
         <UserCard title="Active Users" description="Users with active status" value={activeUsers.length} />
@@ -111,6 +111,7 @@ export default function UsersContent() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>Enrolled Courses</TableHead>
                 <TableHead>Join Date</TableHead>
                 <TableHead>Status</TableHead>
@@ -129,6 +130,7 @@ export default function UsersContent() {
                     </div>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.phone || 'Not provided'}</TableCell>
                   <TableCell>{user.enrolledCourses}</TableCell>
                   <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
@@ -143,3 +145,4 @@ export default function UsersContent() {
     </div>
   )
 }
+

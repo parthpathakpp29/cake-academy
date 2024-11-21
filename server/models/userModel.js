@@ -22,6 +22,12 @@ const userSchema = new mongoose.Schema(
             required: [true, "Password is required"],
             minlength: [8, "Password must be at least 8 characters long"],
         },
+        phone: {  // New phone field
+            type: String,
+            required: [true, "Phone number is required"],
+            unique : [true,"Phone number should be unique"],
+            trim: true,
+        },
         role: {
             type: Number,
             default: 0,

@@ -8,6 +8,7 @@ export const loginSchema = z.object({
 export const signUpSchema = z.object({
     name: z.string().min(3, 'Name must be at least 3 characters'),
     email: z.string().email('Invalid email address'),
+    phone:z.string().min(10,"Phone number must be 10 digits").max(10,"Phone number must be 10 digits").regex(/^\d+$/, 'Phone number must be numeric'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string().min(8, 'Confirm password must be at least 8 characters'),
 }).refine((data) => data.password === data.confirmPassword, {
