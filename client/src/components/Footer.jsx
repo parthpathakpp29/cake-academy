@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ChefHat } from "lucide-react";
-import Logo from "../assets/logo3.png";
+
 
 export default function Footer() {
     // Define a mapping of display text to route paths
@@ -19,7 +19,6 @@ export default function Footer() {
                     <div className="space-y-4">
                         <Link to="/" className="flex items-center justify-center space-x-2">
                             <ChefHat className="h-6 w-6" />
-                            <span className="text-xl font-bold">{Logo}</span>
                         </Link>
                         <p className="text-sm text-muted-foreground">
                             Transform your passion for baking into expertise with our professional courses. Learn from the best and start your culinary journey today.
