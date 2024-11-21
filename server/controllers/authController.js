@@ -12,14 +12,14 @@ const resend = new Resend('re_e3o1och3_3nXGDKDmdampKJgnDzk6VR6A')
 
 export const registerController = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, phone } = req.body; // Include phone
 
-        if (!name || !email || !password) {
+        if (!name || !email || !password || !phone) { // Check for phone
             return res.status(400).json({ success: false, message: "All fields are required" });
         }
 
-        const existingUser = await userModel.findOne({ email });
-        if (existingUser) {
+        const existingUser  = await userModel.findOne({ email });
+        if (existingUser ) {
             return res.status(409).json({
                 success: false,
                 message: "Email already registered",
@@ -27,12 +27,12 @@ export const registerController = async (req, res) => {
         }
 
         const hashedPassword = await hashPassword(password);
-        const user = await new userModel({ name, email, password: hashedPassword }).save();
+        const user = await new userModel({ name, email, password: hashedPassword, phone }).save(); // Save phone
 
         res.status(201).json({
             success: true,
-            message: "User registered successfully",
-            user: { id: user._id, name: user.name, email: user.email },
+            message: "User  registered successfully",
+            user: { id: user._id, name: user.name, email: user.email, phone: user.phone }, // Return phone
         });
     } catch (error) {
         logger.error('Error in registerController:', error);
@@ -43,7 +43,6 @@ export const registerController = async (req, res) => {
         });
     }
 };
-
 export const loginController = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -82,6 +81,7 @@ export const loginController = async (req, res) => {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
+                phone:user.phone,
                 role: user.role,
             },
             token,
@@ -225,6 +225,7 @@ export const getAllUsersController = async (req, res) => {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
+                phone: user.phone,  // Make sure this line is present
                 role: user.role,
                 status: user.status,
                 enrolledCourses: enrollmentCount,

@@ -118,8 +118,12 @@ const ProfileContent = React.memo(({ user }) => (
           <p className="text-lg font-semibold">{user?.email}</p>
         </div>
         <div>
+          <p className="text-sm font-medium text-muted-foreground">Phone</p>
+          <p className="text-lg font-semibold">{user?.phone || 'Not provided'}</p>
+        </div>
+        <div>
           <p className="text-sm font-medium text-muted-foreground">Role</p>
-          <p className="text-lg font-semibold">{user?.role || 'Student'}</p>
+          <p className="text-lg font-semibold">{user?.role === 1 ? 'Admin' : 'Student'}</p>
         </div>
       </div>
     </CardContent>
