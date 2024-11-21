@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChefHat } from "lucide-react";
 
+
 export default function Footer() {
     // Define a mapping of display text to route paths
     const policyLinks = [
@@ -45,14 +46,15 @@ export default function Footer() {
                     <div className="space-y-4">
                         <h3 className="text-sm font-medium">Contact Us</h3>
                         <div className="text-sm text-muted-foreground space-y-2">
-                            <p>Email: <a href="mailto:info@bakeryedu.com">info@bakeryedu.com</a></p>
-                            <p>Phone: (555) 123-4567</p>
-                            <p>Address: 123 Baker Street</p>
+                            <p>Email: <a href="mailto:professionalcakemakingclass@gmail.com">professionalcakemakingclass@gmail.com</a></p>
+                            <p></p>
+                            <p>Sulonguri, Gouranga Nagar,
+                     Newtown, Kolkata-700162</p>
                         </div>
                     </div>
                 </div>
                 <div className="mt-16 pt-8 border-t text-center text-sm text-muted-foreground">
-                    <p>&copy; {new Date().getFullYear()} BakeryEdu. All rights reserved.</p>
+                    <p>&copy; {new Date().getFullYear()} Cake Making Class. All rights reserved.</p>
                 </div>
             </div>
         </footer>
