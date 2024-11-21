@@ -198,7 +198,7 @@ export default function CreateCourse() {
 
       await courseService.createCourse(formData)
       toast.success("Course created successfully")
-      navigate("/admin/courses")
+      navigate("/admin/dashboard")
     } catch (error) {
       console.error("Error creating course:", error)
       toast.error(error.message || "Failed to create course")
