@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ChefHat } from "lucide-react";
-import Logo from "../assets/logo3.png";";
+import Logo from "../assets/logo3.png";
 
 export default function Footer() {
     // Define a mapping of display text to route paths
