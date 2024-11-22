@@ -86,7 +86,7 @@ export default function CourseDetails() {
         prefill: {
           name: user.name,
           email: user.email,
-          contact: "user.phone"
+          contact: user.phone
         },
         theme: {
           color: "#3399cc"
