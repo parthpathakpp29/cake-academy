@@ -65,7 +65,7 @@ export default function CourseDetails() {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: orderResponse.order.amount,
         currency: "INR",
-        name: "Your Company Name",
+        name: "Cake Making Class",
         description: `Enrollment for ${course.title}`,
         order_id: orderResponse.order.id,
         handler: async function (response) {
@@ -86,7 +86,7 @@ export default function CourseDetails() {
         prefill: {
           name: user.name,
           email: user.email,
-          contact: ""
+          contact: "user.phone"
         },
         theme: {
           color: "#3399cc"
