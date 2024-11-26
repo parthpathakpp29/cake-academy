@@ -2,24 +2,21 @@ import userModel from "../models/userModel.js";
 import { comparePassword, hashPassword } from "../helpers/authHelper.js";
 import JWT from "jsonwebtoken";
 import { createLogger } from "../utils/logger.js";
-import crypto from "crypto";
-import { Resend } from 'resend';
 import Enrollment from "../models/enrollmentModel.js";
 
 const logger = createLogger('authController');
 
-const resend = new Resend('re_e3o1och3_3nXGDKDmdampKJgnDzk6VR6A')
 
 export const registerController = async (req, res) => {
     try {
-        const { name, email, password, phone } = req.body; // Include phone
+        const { name, email, password, phone, securityQuestion, securityAnswer } = req.body;
 
-        if (!name || !email || !password || !phone) { // Check for phone
+        if (!name || !email || !password || !phone || !securityQuestion || !securityAnswer) {
             return res.status(400).json({ success: false, message: "All fields are required" });
         }
 
-        const existingUser  = await userModel.findOne({ email });
-        if (existingUser ) {
+        const existingUser = await userModel.findOne({ email });
+        if (existingUser) {
             return res.status(409).json({
                 success: false,
                 message: "Email already registered",
@@ -27,12 +24,19 @@ export const registerController = async (req, res) => {
         }
 
         const hashedPassword = await hashPassword(password);
-        const user = await new userModel({ name, email, password: hashedPassword, phone }).save(); // Save phone
+        const user = await new userModel({ 
+            name, 
+            email, 
+            password: hashedPassword, 
+            phone,
+            securityQuestion,
+            securityAnswer
+        }).save();
 
         res.status(201).json({
             success: true,
-            message: "User  registered successfully",
-            user: { id: user._id, name: user.name, email: user.email, phone: user.phone }, // Return phone
+            message: "User registered successfully",
+            user: { id: user._id, name: user.name, email: user.email, phone: user.phone },
         });
     } catch (error) {
         logger.error('Error in registerController:', error);
@@ -43,6 +47,7 @@ export const registerController = async (req, res) => {
         });
     }
 };
+
 export const loginController = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -116,34 +121,10 @@ export const forgotPasswordController = async (req, res) => {
             });
         }
 
-        // Generate OTP
-        const otp = crypto.randomInt(100000, 999999).toString();
-        const otpExpiry = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
-
-        // Save OTP to user document
-        user.resetPasswordOtp = otp;
-        user.resetPasswordOtpExpiry = otpExpiry;
-        await user.save();
-
-        // Send OTP via email using Resend
-        const { data, error } = await resend.emails.send({
-            from: 'Acme <onboarding@resend.dev>',
-            to: email,
-            subject: 'Password Reset OTP',
-            text: `Your OTP for password reset is: ${otp}. This OTP is valid for 10 minutes.`,
-        });
-
-        if (error) {
-            logger.error('Error sending email:', error);
-            return res.status(500).json({
-                success: false,
-                message: "Failed to send OTP email",
-            });
-        }
-
         res.status(200).json({
             success: true,
-            message: "OTP sent to your email",
+            message: "User found",
+            securityQuestion: user.securityQuestion,
         });
     } catch (error) {
         logger.error('Error in forgotPasswordController:', error);
@@ -157,30 +138,31 @@ export const forgotPasswordController = async (req, res) => {
 
 export const resetPasswordController = async (req, res) => {
     try {
-        const { email, otp, newPassword } = req.body;
+        const { email, securityAnswer, newPassword } = req.body;
 
-        if (!email || !otp || !newPassword) {
+        if (!email || !securityAnswer || !newPassword) {
             return res.status(400).json({ success: false, message: "All fields are required" });
         }
 
-        const user = await userModel.findOne({ 
-            email, 
-            resetPasswordOtp: otp,
-            resetPasswordOtpExpiry: { $gt: Date.now() }
-        });
+        const user = await userModel.findOne({ email });
 
         if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        if (user.securityAnswer !== securityAnswer) {
             return res.status(400).json({
                 success: false,
-                message: "Invalid or expired OTP",
+                message: "Incorrect security answer",
             });
         }
 
         // Reset password
         const hashedPassword = await hashPassword(newPassword);
         user.password = hashedPassword;
-        user.resetPasswordOtp = undefined;
-        user.resetPasswordOtpExpiry = undefined;
         await user.save();
 
         res.status(200).json({
