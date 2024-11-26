@@ -22,10 +22,10 @@ const userSchema = new mongoose.Schema(
             required: [true, "Password is required"],
             minlength: [8, "Password must be at least 8 characters long"],
         },
-        phone: {  // New phone field
+        phone: {
             type: String,
             required: [true, "Phone number is required"],
-            unique : [true,"Phone number should be unique"],
+            unique: [true, "Phone number should be unique"],
             trim: true,
         },
         role: {
@@ -36,20 +36,23 @@ const userSchema = new mongoose.Schema(
         enrolledCourses: [{
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Course'
-          }],
-          status: {
+        }],
+        status: {
             type: String,
             enum: ['Active', 'Inactive'],
             default: 'Active'
-          },
-        resetPasswordOtp: {
-            type: String,
         },
-        resetPasswordOtpExpiry: {
-            type: Date,
+        securityQuestion: {
+            type: String,
+            required: [true, "Security question is required"],
+        },
+        securityAnswer: {
+            type: String,
+            required: [true, "Security answer is required"],
         },
     },
     { timestamps: true }
 );
 
 export default mongoose.model("users", userSchema);
+
