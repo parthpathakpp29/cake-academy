@@ -54,7 +54,7 @@ export const authService = {
             const response = await api.post('/auth/forgot-password', { email });
             return response.data;
         } catch (error) {
-            throw error.response?.data || new Error('Failed to send OTP');
+            throw error.response?.data || new Error('Failed to retrieve security question');
         }
     },
 
@@ -66,6 +66,7 @@ export const authService = {
             throw error.response?.data || new Error('Failed to reset password');
         }
     },
+    
     async getTotalUsers() {
         try {
             const response = await api.get('/auth/total-users');
