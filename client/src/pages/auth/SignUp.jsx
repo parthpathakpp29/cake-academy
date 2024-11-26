@@ -2,18 +2,40 @@ import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { authService } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
-import { signUpSchema } from '@/utils/validations';
 import { PasswordInput } from '@/components/PasswordInput';
+
+const securityQuestions = [
+  "What was the name of your first pet?",
+  "In which city were you born?",
+  "What is your mother's maiden name?",
+  "What was the make of your first car?",
+  "What elementary school did you attend?",
+  "What is the name of your favorite childhood friend?",
+];
+
+const signUpSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Invalid email address'),
+    phone: z.string().min(10, 'Phone number must be at least 10 digits'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string(),
+    securityQuestion: z.string().min(1, 'Please select a security question'),
+    securityAnswer: z.string().min(1, 'Security answer is required'),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+});
 
 export default function SignUp() {
     const navigate = useNavigate();
@@ -33,6 +55,8 @@ export default function SignUp() {
             phone: '',
             password: '',
             confirmPassword: '',
+            securityQuestion: '',
+            securityAnswer: '',
         },
     });
 
@@ -41,8 +65,10 @@ export default function SignUp() {
             const response = await authService.signUp({
                 name: data.name,
                 email: data.email,
-                phone: data.phone, // Include phone
+                phone: data.phone,
                 password: data.password,
+                securityQuestion: data.securityQuestion,
+                securityAnswer: data.securityAnswer,
             });
 
             if (response.success) {
@@ -134,6 +160,43 @@ export default function SignUp() {
                                     </FormItem>
                                 )}
                             />
+                            <FormField
+                                control={form.control}
+                                name="securityQuestion"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Security Question</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a security question" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {securityQuestions.map((question, index) => (
+                                                    <SelectItem key={index} value={question}>
+                                                        {question}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="securityAnswer"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Security Answer</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Enter your security answer" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <Button
                                 type="submit"
                                 className="w-full"
@@ -163,3 +226,4 @@ export default function SignUp() {
         </div>
     );
 }
+
