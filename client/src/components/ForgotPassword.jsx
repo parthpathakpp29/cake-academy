@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -17,7 +17,7 @@ const forgotPasswordSchema = z.object({
 })
 
 export default function ForgotPassword() {
-  const [isOtpSent, setIsOtpSent] = useState(false)
+  const [securityQuestion, setSecurityQuestion] = useState('')
   const navigate = useNavigate()
 
   const form = useForm({
@@ -31,12 +31,12 @@ export default function ForgotPassword() {
     try {
       const response = await authService.forgotPassword(data.email)
       if (response.success) {
-        setIsOtpSent(true)
-        toast.success('OTP sent to your email')
-        // Navigate to reset password page and pass the email
-        navigate('/reset-password', { state: { email: data.email } })
+        setSecurityQuestion(response.securityQuestion)
+        toast.success('Security question retrieved')
+        // Navigate to reset password page and pass the email and security question
+        navigate('/reset-password', { state: { email: data.email, securityQuestion: response.securityQuestion } })
       } else {
-        toast.error(response.message || 'Failed to send OTP')
+        toast.error(response.message || 'Failed to retrieve security question')
       }
     } catch (error) {
       console.error(error)
@@ -50,7 +50,7 @@ export default function ForgotPassword() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Forgot Password</CardTitle>
           <CardDescription className="text-center">
-            {isOtpSent ? 'Enter the OTP sent to your email' : 'Enter your email to receive a password reset OTP'}
+            Enter your email to retrieve your security question
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -76,11 +76,12 @@ export default function ForgotPassword() {
               >
                 {form.formState.isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending OTP...
+                    <Loader2 className="mr-2 h-
+4 w-4 animate-spin" />
+                    Retrieving...
                   </>
                 ) : (
-                  'Send OTP'
+                  'Retrieve Security Question'
                 )}
               </Button>
             </form>
@@ -95,3 +96,4 @@ export default function ForgotPassword() {
     </div>
   )
 }
+
