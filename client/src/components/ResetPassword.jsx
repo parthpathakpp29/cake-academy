@@ -14,7 +14,7 @@ import { PasswordInput } from '@/components/PasswordInput'
 
 const resetPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
-  securityAnswer: z.string().min(1, 'Security answer is required'),
+  otp: z.string().length(6, 'OTP must be 6 digits'),
   newPassword: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
 }).refine((data) => data.newPassword === data.confirmPassword, {
@@ -30,7 +30,7 @@ export default function ResetPassword() {
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
       email: location.state?.email || '',
-      securityAnswer: '',
+      otp: '',
       newPassword: '',
       confirmPassword: '',
     },
@@ -57,7 +57,7 @@ export default function ResetPassword() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Reset Password</CardTitle>
           <CardDescription className="text-center">
-            Answer your security question to reset your password
+            Enter your email, OTP, and new password
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -70,26 +70,20 @@ export default function ResetPassword() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your email" {...field} readOnly />
+                      <Input placeholder="Enter your email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormItem>
-                <FormLabel>Security Question</FormLabel>
-                <FormControl>
-                  <Input value={location.state?.securityQuestion || ''} readOnly />
-                </FormControl>
-              </FormItem>
               <FormField
                 control={form.control}
-                name="securityAnswer"
+                name="otp"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Security Answer</FormLabel>
+                    <FormLabel>OTP</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your security answer" {...field} />
+                      <Input placeholder="Enter OTP" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -147,4 +141,3 @@ export default function ResetPassword() {
     </div>
   )
 }
-
