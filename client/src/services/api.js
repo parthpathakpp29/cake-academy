@@ -54,7 +54,7 @@ export const authService = {
             const response = await api.post('/auth/forgot-password', { email });
             return response.data;
         } catch (error) {
-            throw error.response?.data || new Error('Failed to retrieve security question');
+            throw error.response?.data || new Error('Failed to send OTP');
         }
     },
 
@@ -66,7 +66,6 @@ export const authService = {
             throw error.response?.data || new Error('Failed to reset password');
         }
     },
-    
     async getTotalUsers() {
         try {
             const response = await api.get('/auth/total-users');
@@ -144,11 +143,14 @@ export const courseService = {
 
     async updateCourse(id, courseData) {
         try {
+            console.log("Sending update request for course:", id);
+            console.log("Update data:", Object.fromEntries(courseData));
             const response = await api.put(`/courses/update-course/${id}`, courseData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
+            console.log("Update response:", response.data);
             return response.data;
         } catch (error) {
             console.error("API Error:", error.response ? error.response.data : error.message);
