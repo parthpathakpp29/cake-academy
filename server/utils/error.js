@@ -1,5 +1,13 @@
-export const createError = (status, message) => {
-    const error = new Error(message);
-    error.status = status;
-    return error;
+export class AppError extends Error {
+    constructor(statusCode, message) {
+        super(message);
+        this.statusCode = statusCode;
+        this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+        
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+
+export const createError = (statusCode, message) => {
+    return new AppError(statusCode, message);
 };

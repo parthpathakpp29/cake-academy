@@ -154,6 +154,8 @@ function MainContent({ course, handleStartCourse, isEnrolled, user }) {
 function Curriculum({ lectures, isEnrolled, user, course }) {
   const canAccessContent = isEnrolled || user?.role === 1 || course.instructor === user?._id;
 
+  console.log('Lectures:', lectures);
+
   return (
     <section className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex justify-between items-center mb-6">
@@ -169,29 +171,24 @@ function Curriculum({ lectures, isEnrolled, user, course }) {
 
       <Accordion type="single" collapsible className="space-y-4">
         {lectures?.map((lecture, index) => (
-          <AccordionItem 
-            key={index} 
-            value={`item-${index}`}
-            className="border rounded-lg px-4"
-          >
+          <AccordionItem key={index} value={`item-${index}`} className="border rounded-lg px-4">
             <AccordionTrigger className="hover:no-underline py-4">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 w-full">
                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
                   <Play className="h-4 w-4 text-primary" />
                 </div>
-                <div className="text-left">
-                  <div className="font-medium">Lesson {index + 1}: {lecture.title}</div>
+                <div className="text-left flex-grow">
+                  <div className="font-medium">
+                    Lesson {index + 1}: {lecture.title || `Untitled Lecture ${index + 1}`}
+                  </div>
                   <div className="text-sm text-gray-500">
-                    {/* You can add more details about the lecture here */}
+                    {/* You can add additional details here if available */}
                   </div>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="pt-2 pb-4">
               <div className="pl-12">
-                {!canAccessContent && (
-                  <p className="text-sm text-primary mt-2">Enroll in the course to access this lesson</p>
-                )}
                 {canAccessContent && (
                   <p className="text-sm text-gray-600 mt-2">{lecture.description || 'No description available.'}</p>
                 )}
@@ -298,3 +295,6 @@ function ContactItem({ href, icon, text }) {
     </a>
   ) : content;
 }
+
+
+

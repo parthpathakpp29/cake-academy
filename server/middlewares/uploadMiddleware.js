@@ -23,7 +23,7 @@ const fileFilter = (req, file, cb) => {
         if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
             return cb(new Error("Only image files are allowed for thumbnail!"), false);
         }
-    } else if (file.fieldname === "video") { // Changed from videos to video
+    } else if (file.fieldname === "video") {
         if (!file.originalname.match(/\.(mp4|mov|avi|wmv)$/)) {
             return cb(new Error("Only video files are allowed for lectures!"), false);
         }
@@ -35,7 +35,7 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: process.env.MAX_FILE_SIZE || 1024 * 1024 * 1024, // 1GB limit or use environment variable
+        fileSize: parseInt(process.env.MAX_FILE_SIZE) || 2147483648, // 2GB default if not specified in env
     }
 });
 

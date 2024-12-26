@@ -12,6 +12,7 @@ import { Upload, Plus, X, ImageIcon, Loader2 } from 'lucide-react'
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import { courseSchema } from "@/utils/validations"
 import { courseService } from "@/services/api"
+import { Progress } from "@/components/ui/progress"
 
 const ThumbnailUpload = ({ value, onChange }) => {
   const [previewUrl, setPreviewUrl] = useState(null)
@@ -154,6 +155,7 @@ const LectureField = ({ index, remove, control }) => (
 export default function CreateCourse() {
   const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   const form = useForm({
     resolver: zodResolver(courseSchema),
@@ -179,6 +181,7 @@ export default function CreateCourse() {
       }
 
       setIsSubmitting(true)
+      setUploadProgress(0)
       const formData = new FormData()
 
       formData.append('title', data.title)
@@ -196,7 +199,9 @@ export default function CreateCourse() {
         }
       })
 
-      await courseService.createCourse(formData)
+      await courseService.createCourse(formData, (progress) => {
+        setUploadProgress(progress)
+      })
       toast.success("Course created successfully")
       navigate("/admin/dashboard")
     } catch (error) {
@@ -204,6 +209,7 @@ export default function CreateCourse() {
       toast.error(error.message || "Failed to create course")
     } finally {
       setIsSubmitting(false)
+      setUploadProgress(0)
     }
   }
 
@@ -335,6 +341,17 @@ export default function CreateCourse() {
           </Tabs>
         </form>
       </Form>
+
+      {isSubmitting && (
+        <div className="fixed bottom-4 right-4 w-80 bg-background border rounded-lg shadow-lg p-4">
+          <div className="space-y-2">
+            <Progress value={uploadProgress} />
+            <p className="text-sm text-center text-muted-foreground">
+              Uploading: {uploadProgress}%
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

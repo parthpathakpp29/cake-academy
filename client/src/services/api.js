@@ -85,7 +85,7 @@ export const authService = {
 };
 
 export const courseService = {
-    async createCourse(courseData) {
+    async createCourse(courseData, onProgress) {
         try {
             const formData = new FormData();
 
@@ -114,6 +114,12 @@ export const courseService = {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
+                onUploadProgress: (progressEvent) => {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    if (onProgress) {
+                        onProgress(percentCompleted);
+                    }
+                }
             });
             return response.data;
         } catch (error) {
@@ -141,11 +147,9 @@ export const courseService = {
         }
     },
 
-    async updateCourse(id, courseData) {
+    async updateCourse(courseId, courseData) {
         try {
-            console.log("Sending update request for course:", id);
-            console.log("Update data:", Object.fromEntries(courseData));
-            const response = await api.put(`/courses/update-course/${id}`, courseData, {
+            const response = await api.patch(`/courses/update-course/${courseId}`, courseData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -153,8 +157,7 @@ export const courseService = {
             console.log("Update response:", response.data);
             return response.data;
         } catch (error) {
-            console.error("API Error:", error.response ? error.response.data : error.message);
-            throw error.response ? error.response.data : new Error('Failed to update course');
+            throw error.response?.data || new Error('Failed to update course');
         }
     },
 
@@ -201,6 +204,32 @@ export const courseService = {
             throw error.response?.data || new Error('Failed to fetch user purchases');
         }
     },
+    async addLecture(courseId, lectureData, onProgress) {
+        try {
+            const response = await api.post(`/courses/add-lecture/${courseId}`, lectureData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+                onUploadProgress: (progressEvent) => {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    if (onProgress) {
+                        onProgress(percentCompleted);
+                    }
+                }
+            });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || new Error('Failed to add lecture');
+        }
+    },
+    async deleteLecture(courseId, lectureId) {
+        try {
+            const response = await api.delete(`/courses/delete-lecture/${courseId}/${lectureId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || new Error('Failed to delete lecture');
+        }
+    }
 };
 
 

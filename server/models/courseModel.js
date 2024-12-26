@@ -4,15 +4,17 @@ const lectureSchema = new mongoose.Schema({
     title: {
         type: String,
         required: [true, "Lecture title is required"],
+        trim: true,
+        minlength: [1, "Lecture title cannot be empty"]
     },
     videoUrl: {
         type: String,
-        required: [true, "Lecture video URL is required"],
+        required: true
     },
     videoKey: {
         type: String,
-        required: [true, "Lecture video key is required"],
-    },
+        required: true
+    }
 });
 
 const courseSchema = new mongoose.Schema({
