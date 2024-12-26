@@ -154,6 +154,7 @@ export const courseService = {
                     'Content-Type': 'multipart/form-data',
                 },
             });
+            console.log("Update response:", response.data);
             return response.data;
         } catch (error) {
             throw error.response?.data || new Error('Failed to update course');

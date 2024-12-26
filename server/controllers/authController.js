@@ -8,7 +8,7 @@ import Enrollment from "../models/enrollmentModel.js";
 
 const logger = createLogger('authController');
 
-const resend = new Resend('re_e3o1och3_3nXGDKDmdampKJgnDzk6VR6A')
+const resend = new Resend('re_fXQTDKNt_2SB9AGzVYzs99FpKPxHP4oFR')
 
 export const registerController = async (req, res) => {
     try {
