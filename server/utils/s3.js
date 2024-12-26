@@ -13,33 +13,50 @@ const s3Client = new S3Client({
   },
 });
 
-export const uploadFile = async (file, folder) => {
+// Optimized folder structure constants
+const S3_FOLDERS = {
+  THUMBNAILS: 'thumbnails',
+  LECTURES: 'lectures'
+};
+
+export const uploadFile = async (file, { courseId, fileType }) => {
+  console.log('Starting S3 upload for file:', file.originalname);
   const fileStream = fs.createReadStream(file.path);
-  const fileName = `${folder}/${Date.now()}-${file.originalname}`;
+  
+  // Determine the appropriate folder based on file type
+  let key;
+  if (fileType === 'thumbnail') {
+    key = `${S3_FOLDERS.THUMBNAILS}/${courseId}/${Date.now()}-${file.originalname}`;
+  } else if (fileType === 'lecture') {
+    key = `${S3_FOLDERS.LECTURES}/${courseId}/${Date.now()}-${file.originalname}`;
+  } else {
+    throw new Error('Invalid file type specified');
+  }
 
   const uploadParams = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: fileName,
+    Key: key,
     Body: fileStream,
-    ContentType: file.mimetype
-    // Removed ACL: 'public-read'
+    ContentType: file.mimetype,
   };
 
   try {
-    const result = await s3Client.send(new PutObjectCommand(uploadParams));
-    const url = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+    console.log('Uploading to S3 with params:', {
+      Bucket: uploadParams.Bucket,
+      Key: uploadParams.Key,
+      ContentType: uploadParams.ContentType
+    });
     
-    if (result.$metadata.httpStatusCode === 200) {
-      return {
-        url,
-        key: fileName,
-      };
-    } else {
-      throw new Error('Upload failed');
-    }
+    await s3Client.send(new PutObjectCommand(uploadParams));
+    
+    console.log('Successfully uploaded to S3');
+    return {
+      url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
+      key: key
+    };
   } catch (error) {
-    console.error("Error uploading file:", error);
-    throw error;
+    console.error('Error uploading to S3:', error);
+    throw new Error('Failed to upload file to S3');
   }
 };
 
