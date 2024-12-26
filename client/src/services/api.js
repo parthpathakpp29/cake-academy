@@ -157,7 +157,18 @@ export const courseService = {
             console.log("Update response:", response.data);
             return response.data;
         } catch (error) {
+            console.error("API Error:", error.response ? error.response.data : error.message);
             throw error.response?.data || new Error('Failed to update course');
+        }
+    },
+
+    async updateLecture(courseId, lectureId, data) {
+        try {
+            const response = await api.patch(`/courses/update-lecture/${courseId}/${lectureId}`, data);
+            return response.data;
+        } catch (error) {
+            console.error("API Error updating lecture:", error.response?.data || error.message);
+            throw error.response?.data || new Error('Failed to update lecture');
         }
     },
 
@@ -229,7 +240,16 @@ export const courseService = {
         } catch (error) {
             throw error.response?.data || new Error('Failed to delete lecture');
         }
-    }
+    },
+    async updateLecture(courseId, lectureId, lectureData) {
+        try {
+            const response = await api.patch(`/courses/update-lecture/${courseId}/${lectureId}`, lectureData);
+            return response.data;
+        } catch (error) {
+            console.error("API Error:", error.response ? error.response.data : error.message);
+            throw error.response?.data || new Error('Failed to update lecture');
+        }
+    },
 };
 
 
