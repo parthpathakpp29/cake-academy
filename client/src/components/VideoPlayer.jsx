@@ -98,8 +98,8 @@ export default function VideoPlayer({ url, poster, onReady }) {
           <Loader2 className="w-12 h-12 text-white animate-spin" />
         </div>
       )}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="flex flex-col space-y-2 text-white">
+      <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex flex-col space-y-1 sm:space-y-2 text-white">
           <Slider
             value={[playerState.currentTime]}
             max={playerState.duration}
@@ -108,35 +108,44 @@ export default function VideoPlayer({ url, poster, onReady }) {
             className="w-full"
           />
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="icon" onClick={togglePlay}>
-                {playerState.isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-10 sm:w-10 p-0" onClick={togglePlay}>
+                {playerState.isPlaying ? 
+                  <Pause className="h-4 w-4 sm:h-6 sm:w-6" /> : 
+                  <Play className="h-4 w-4 sm:h-6 sm:w-6" />
+                }
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => seek(playerState.currentTime - 10)}>
-                <SkipBack className="h-5 w-5" />
+              <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-10 sm:w-10 p-0 hidden xs:inline-flex" onClick={() => seek(playerState.currentTime - 10)}>
+                <SkipBack className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => seek(playerState.currentTime + 10)}>
-                <SkipForward className="h-5 w-5" />
+              <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-10 sm:w-10 p-0 hidden xs:inline-flex" onClick={() => seek(playerState.currentTime + 10)}>
+                <SkipForward className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
-              <span className="text-sm">
+              <span className="text-xs sm:text-sm">
                 {formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}
               </span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="icon" onClick={toggleMute}>
-                  {playerState.volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-10 sm:w-10 p-0" onClick={toggleMute}>
+                  {playerState.volume === 0 ? 
+                    <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" /> : 
+                    <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  }
                 </Button>
                 <Slider
                   value={[playerState.volume * 100]}
                   max={100}
                   step={1}
                   onValueChange={(value) => changeVolume(value[0] / 100)}
-                  className="w-24"
+                  className="w-16 sm:w-24 hidden xs:block"
                 />
               </div>
-              <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
-                {playerState.isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+              <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-10 sm:w-10 p-0" onClick={toggleFullscreen}>
+                {playerState.isFullscreen ? 
+                  <Minimize className="h-4 w-4 sm:h-5 sm:w-5" /> : 
+                  <Maximize className="h-4 w-4 sm:h-5 sm:w-5" />
+                }
               </Button>
             </div>
           </div>
