@@ -1,176 +1,141 @@
 import React, { useState } from 'react';
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Upload, Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Pencil, Save, X } from 'lucide-react';
 import { courseService } from "@/services/api";
-import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 
-const lectureSchema = z.object({
-    title: z.string().min(1, "Title is required"),
-    video: z.instanceof(File, { message: "Video is required" })
-});
+export default function ManageLectures({ courseId, lectures, onLectureAdded, onLectureUpdated }) {
+    const [newLectureTitle, setNewLectureTitle] = useState('');
+    const [newLectureVideo, setNewLectureVideo] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [editingLectureId, setEditingLectureId] = useState(null);
+    const [editingLectureTitle, setEditingLectureTitle] = useState('');
 
-export default function ManageLectures({ courseId, onLectureAdded, lectures }) {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
-
-    const form = useForm({
-        resolver: zodResolver(lectureSchema),
-        defaultValues: {
-            title: "",
-            video: null
+    const handleAddLecture = async (e) => {
+        e.preventDefault();
+        if (!newLectureTitle || !newLectureVideo) {
+            toast.error("Please provide both title and video for the new lecture");
+            return;
         }
-    });
 
-    const onSubmit = async (data) => {
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('title', newLectureTitle);
+        formData.append('video', newLectureVideo);
+
         try {
-            setIsSubmitting(true);
-            setUploadProgress(0);
-            const formData = new FormData();
-            formData.append('title', data.title.trim());
-            formData.append('video', data.video);
-
-            await courseService.addLecture(courseId, formData, (progress) => {
-                setUploadProgress(progress);
-            });
+            await courseService.addLecture(courseId, formData);
             toast.success("Lecture added successfully");
-            form.reset();
-            if (onLectureAdded) onLectureAdded();
+            setNewLectureTitle('');
+            setNewLectureVideo(null);
+            onLectureAdded();
         } catch (error) {
             toast.error(error.message || "Failed to add lecture");
         } finally {
-            setIsSubmitting(false);
-            setUploadProgress(0);
+            setIsUploading(false);
         }
     };
 
     const handleDeleteLecture = async (lectureId) => {
+        if (window.confirm("Are you sure you want to delete this lecture?")) {
+            try {
+                await courseService.deleteLecture(courseId, lectureId);
+                toast.success("Lecture deleted successfully");
+                onLectureAdded();
+            } catch (error) {
+                toast.error(error.message || "Failed to delete lecture");
+            }
+        }
+    };
+
+    const startEditingLecture = (lecture) => {
+        setEditingLectureId(lecture._id);
+        setEditingLectureTitle(lecture.title);
+    };
+
+    const cancelEditingLecture = () => {
+        setEditingLectureId(null);
+        setEditingLectureTitle('');
+    };
+
+    const saveLectureTitle = async (lectureId) => {
         try {
-            setIsDeleting(true);
-            await courseService.deleteLecture(courseId, lectureId);
-            toast.success("Lecture deleted successfully");
-            if (onLectureAdded) onLectureAdded();
+            await onLectureUpdated(lectureId, editingLectureTitle);
+            setEditingLectureId(null);
+            setEditingLectureTitle('');
         } catch (error) {
-            toast.error(error.message || "Failed to delete lecture");
-        } finally {
-            setIsDeleting(false);
+            toast.error(error.message || "Failed to update lecture title");
         }
     };
 
     return (
         <div className="space-y-6">
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Lecture Title</FormLabel>
-                                <FormControl>
-                                    <Input 
-                                        placeholder="Enter lecture title"
-                                        {...field}
-                                        onChange={(e) => field.onChange(e.target.value)}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="video"
-                        render={({ field: { value, onChange, ...field } }) => (
-                            <FormItem>
-                                <FormLabel>Video</FormLabel>
-                                <FormControl>
-                                    <div className="flex items-center gap-4">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => document.getElementById('video-upload').click()}
-                                        >
-                                            <Upload className="mr-2 h-4 w-4" />
-                                            Upload Video
-                                        </Button>
-                                        <input
-                                            id="video-upload"
-                                            type="file"
-                                            accept="video/*"
-                                            className="hidden"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) onChange(file);
-                                            }}
-                                            {...field}
-                                        />
-                                        {value && (
-                                            <span className="text-sm text-gray-500">
-                                                {value.name}
-                                            </span>
-                                        )}
-                                    </div>
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {isSubmitting && (
-                        <div className="space-y-2">
-                            <Progress value={uploadProgress} />
-                            <p className="text-sm text-center text-muted-foreground">
-                                Uploading: {uploadProgress}%
-                            </p>
-                        </div>
+            <h2 className="text-2xl font-bold">Manage Lectures</h2>
+            
+            <form onSubmit={handleAddLecture} className="space-y-4">
+                <Input
+                    type="text"
+                    placeholder="New Lecture Title"
+                    value={newLectureTitle}
+                    onChange={(e) => setNewLectureTitle(e.target.value)}
+                    required
+                />
+                <Input
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => setNewLectureVideo(e.target.files[0])}
+                    required
+                />
+                <Button type="submit" disabled={isUploading}>
+                    {isUploading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Uploading...
+                        </>
+                    ) : (
+                        'Add Lecture'
                     )}
+                </Button>
+            </form>
 
-                    <Button 
-                        type="button" 
-                        disabled={isSubmitting}
-                        onClick={form.handleSubmit(onSubmit)}
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Uploading...
-                            </>
-                        ) : (
-                            'Add Lecture'
-                        )}
-                    </Button>
-                </form>
-            </Form>
-
-            <div className="mt-8">
-                <h3 className="text-lg font-semibold mb-4">Current Lectures</h3>
-                <div className="space-y-4">
-                    {lectures?.map((lecture, index) => (
-                        <div key={lecture._id} className="flex items-center justify-between p-4 border rounded-lg">
-                            <div>
-                                <span className="font-medium">Lecture {index + 1}: </span>
-                                {lecture.title}
+            <div className="space-y-4">
+                {lectures?.map((lecture, index) => (
+                    <div key={lecture._id} className="flex items-center justify-between p-4 bg-gray-100 rounded-lg">
+                        {editingLectureId === lecture._id ? (
+                            <div className="flex items-center space-x-2 flex-grow">
+                                <Input
+                                    type="text"
+                                    value={editingLectureTitle}
+                                    onChange={(e) => setEditingLectureTitle(e.target.value)}
+                                    className="flex-grow"
+                                />
+                                <Button onClick={() => saveLectureTitle(lecture._id)} size="icon">
+                                    <Save className="h-4 w-4" />
+                                </Button>
+                                <Button onClick={cancelEditingLecture} size="icon" variant="outline">
+                                    <X className="h-4 w-4" />
+                                </Button>
                             </div>
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDeleteLecture(lecture._id)}
-                                disabled={isDeleting}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
-                </div>
+                        ) : (
+                            <>
+                                <span className="text-lg font-medium">
+                                    {index + 1}. {lecture.title}
+                                </span>
+                                <div className="space-x-2">
+                                    <Button onClick={() => startEditingLecture(lecture)} size="icon" variant="outline">
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button onClick={() => handleDeleteLecture(lecture._id)} size="icon" variant="destructive">
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                ))}
             </div>
         </div>
     );
-} 
+}
+

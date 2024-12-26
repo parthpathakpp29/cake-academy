@@ -255,125 +255,70 @@ export const getCourseById = async (req, res, next) => {
 
 
 export const updateCourse = async (req, res, next) => {
-
     try {
-
         const { id } = req.params;
-
         const { title, description, price } = req.body;
-
         
+        console.log("Received update data:", { id, title, description, price });
 
         const course = await courseModel.findById(id);
-
         if (!course) {
-
             throw createError(404, "Course not found");
-
         }
-
-
 
         // Update basic fields
-
         course.title = title;
-
         course.description = description;
-
         course.price = price;
 
-
-
         // Handle thumbnail update if provided
-
         if (req.files?.thumbnail) {
-
             // Delete old thumbnail from S3 if it exists
-
-            if (course.thumbnailKey) {
-
+            if (course.thumbnail.key) {
                 try {
-
-                    await deleteFile(course.thumbnailKey);
-
+                    await deleteFile(course.thumbnail.key);
                 } catch (error) {
-
                     console.error("Error deleting old thumbnail:", error);
-
                 }
-
             }
 
-
-
             // Upload new thumbnail
-
             const thumbnailResult = await uploadFile(
-
                 req.files.thumbnail[0],
-
                 { 
-
                     courseId: id,
-
                     fileType: 'thumbnail'
-
                 }
-
             );
 
-
-
-            course.thumbnailUrl = thumbnailResult.url;
-
-            course.thumbnailKey = thumbnailResult.key;
-
-
+            course.thumbnail = {
+                url: thumbnailResult.url,
+                key: thumbnailResult.key
+            };
 
             // Clean up local file
-
             await fs.unlink(req.files.thumbnail[0].path);
-
         }
-
-
 
         await course.save();
 
-
-
         res.status(200).json({
-
             success: true,
-
             message: "Course updated successfully",
-
             course
-
         });
-
     } catch (error) {
-
+        console.error("Error in updateCourse:", error);
         // Clean up uploaded files if any error occurs
-
         if (req.files?.thumbnail) {
-
             try {
-
                 await fs.unlink(req.files.thumbnail[0].path);
-
             } catch (unlinkError) {
-
                 console.error("Error cleaning up thumbnail file:", unlinkError);
-
             }
-
         }
-
         next(error);
-
     }
-
 };
 
 
@@ -696,6 +641,42 @@ export const deleteLecture = async (req, res, next) => {
 
 };
 
+export const updateLectureTitleController = async (req, res, next) => {
+    try {
+        const { courseId, lectureId } = req.params;
+        const { title } = req.body;
 
+        // Find the course
+        const course = await courseModel.findById(courseId);
+        if (!course) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Course not found" 
+            });
+        }
 
+        // Find the specific lecture
+        const lectureToUpdate = course.lectures.id(lectureId);
+        if (!lectureToUpdate) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Lecture not found" 
+            });
+        }
 
+        // Update the lecture title
+        lectureToUpdate.title = title;
+        
+        // Save the course
+        await course.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Lecture title updated successfully",
+            lecture: lectureToUpdate
+        });
+    } catch (error) {
+        console.error("Error updating lecture title:", error);
+        next(createError(500, "Failed to update lecture title"));
+    }
+};

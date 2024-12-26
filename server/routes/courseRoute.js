@@ -1,5 +1,5 @@
 import express from "express";
-import { createCourse, getAllCourses, getCourseById, deleteCourse, checkEnrollment, getUserPurchases, addLectureToCourse, deleteLecture, updateCourse } from "../controllers/courseController.js";
+import { createCourse, getAllCourses, getCourseById, deleteCourse, checkEnrollment, getUserPurchases, addLectureToCourse, deleteLecture, updateCourse,updateLectureTitleController } from "../controllers/courseController.js";
 import upload from "../middlewares/uploadMiddleware.js";
 import { isAdmin, requireSignIn } from "../middlewares/authMiddleware.js";
 
@@ -61,4 +61,13 @@ router.patch(
     updateCourse
 );
 
+// Update the route to match the exact pattern
+router.patch(
+    "/update-lecture/:courseId/:lectureId",  // Ensure this matches exactly
+    requireSignIn,
+    isAdmin,
+    updateLectureTitleController  // Make sure you have this controller
+);
+
 export default router;
+
