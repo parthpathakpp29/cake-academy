@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, GraduationCap, Timer, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 // Import images from assets folder
 import Banner1 from "@/assets/banner1.avif";
@@ -10,9 +11,11 @@ import Banner2 from "@/assets/banner2.avif";
 import Banner3 from "@/assets/banner3.avif";
 
 const Hero = () => {
+  const navigate = useNavigate(); // Initialize the navigate function
+
   const slides = useMemo(() => [
     {
-      image: Banner1, // Use imported image here
+      image: Banner1,
       title: "Master the Art of Baking",
       description: "Learn from world-class pastry chefs and start your culinary journey today",
       stats: [
@@ -21,7 +24,7 @@ const Hero = () => {
       ],
     },
     {
-      image: Banner2, // Use imported image here
+      image: Banner2,
       title: "Professional Pastry Courses",
       description: "From basics to advanced techniques, we've got you covered",
       stats: [
@@ -31,7 +34,7 @@ const Hero = () => {
       ],
     },
     {
-      image: Banner3, // Use imported image here
+      image: Banner3,
       title: "Hands-on Experience",
       description: "Practice with real recipes and get personalized feedback",
       stats: [
@@ -103,10 +106,19 @@ const Hero = () => {
                     transition={{ delay: 0.4, duration: 0.4 }}
                     className="mt-8 flex flex-wrap gap-4"
                   >
-                    <Button size="lg" className="h-12 px-8">
+                    <Button
+                      size="lg"
+                      className="h-12 px-8"
+                      onClick={() => navigate("/courses")}
+                    >
                       Start Learning
                     </Button>
-                    <Button size="lg" variant="outline" className="h-12 px-8">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="h-12 px-8"
+                      onClick={() => navigate("/courses")}
+                    >
                       View Courses
                     </Button>
                   </motion.div>
