@@ -90,8 +90,7 @@ export default function FeaturedCourses() {
                     View Course
                   </Button>
                   <a href="https://www.youtube.com/watch?v=am-hlPdhIqg" target="_blank" rel="noopener noreferrer">
-                    <Button variant="default" className="flex items-center gap-2">
-                      <GraduationCap className="w-4 h-4" />
+                    <Button variant="default" className="flex items-center gap-2 ">
                         Watch Introduction
                     </Button>
                     </a>
