@@ -187,13 +187,6 @@ function Curriculum({ lectures, isEnrolled, user, course }) {
                 </div>
               </div>
             </AccordionTrigger>
-            <AccordionContent className="pt-2 pb-4">
-              <div className="pl-12">
-                {canAccessContent && (
-                  <p className="text-sm text-gray-600 mt-2">{lecture.description || 'No description available.'}</p>
-                )}
-              </div>
-            </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>
