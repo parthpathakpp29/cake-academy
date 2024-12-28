@@ -89,6 +89,12 @@ export default function FeaturedCourses() {
                     <GraduationCap className="w-4 h-4" />
                     View Course
                   </Button>
+                  <a href="https://www.youtube.com/watch?v=am-hlPdhIqg" target="_blank" rel="noopener noreferrer">
+                    <Button variant="default" className="flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4" />
+                        Watch Introduction
+                    </Button>
+                    </a>
                 </CardFooter>
               </Card>
             </motion.div>
