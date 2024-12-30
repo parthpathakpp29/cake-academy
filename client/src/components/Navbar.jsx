@@ -14,7 +14,6 @@ import Logo from '../assets/logo3.png'
 import { useAuth } from "@/context/AuthContext"
 import Profile from "./Profile"
 
-
 export default function Navbar() {
     const [isOpen, setIsOpen] = React.useState(false)
     const { user, logout } = useAuth();
@@ -28,7 +27,10 @@ export default function Navbar() {
         >
             <nav className="container flex items-center justify-between p-4">
                 <Link to="/" className="flex items-center space-x-2">
-                    <img src={Logo} alt="Logo" className="h1 w-20" />
+                    <img src={Logo} alt="Logo" className="h-10 w-20" />
+                    <span className="text-lg font-semibold text-gray-800">
+                        Professional Cake Making Academy
+                    </span>
                 </Link>
 
                 {/* Desktop Navigation */}
@@ -40,9 +42,7 @@ export default function Navbar() {
                         Courses
                     </Link>
                     {user ? (
-                        <>
-                            <Profile />
-                        </>
+                        <Profile />
                     ) : (
                         <>
                             <Button variant="ghost" size="sm" asChild>
@@ -52,12 +52,7 @@ export default function Navbar() {
                                 <Link to="/sign-up">Sign Up</Link>
                             </Button>
                         </>
-                    )
-
-                    }
-
-
-              
+                    )}
                 </div>
 
                 {/* Mobile Navigation */}
@@ -80,9 +75,7 @@ export default function Navbar() {
                             </DropdownMenuItem>
 
                             {user ? (
-                                <>
-                                    <Profile />
-                                </>
+                                <Profile />
                             ) : (
                                 <>
                                     <DropdownMenuItem asChild>
