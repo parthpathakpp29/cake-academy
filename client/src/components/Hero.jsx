@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/router";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, GraduationCap, Timer, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,8 @@ import Banner2 from "@/assets/banner2.avif";
 import Banner3 from "@/assets/banner3.avif";
 
 const Hero = () => {
+  const router = useRouter();
+
   const slides = useMemo(() => [
     {
       image: Banner1, // Use imported image here
@@ -103,10 +106,19 @@ const Hero = () => {
                     transition={{ delay: 0.4, duration: 0.4 }}
                     className="mt-8 flex flex-wrap gap-4"
                   >
-                    <Button size="lg" className="h-12 px-8">
+                    <Button
+                      size="lg"
+                      className="h-12 px-8"
+                      onClick={() => router.push("/courses")}
+                    >
                       Start Learning
                     </Button>
-                    <Button size="lg" variant="outline" className="h-12 px-8">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="h-12 px-8"
+                      onClick={() => router.push("/courses")}
+                    >
                       View Courses
                     </Button>
                   </motion.div>
