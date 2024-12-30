@@ -28,7 +28,7 @@ export default function Navbar() {
             <nav className="container flex items-center justify-between p-4">
                 <Link to="/" className="flex items-center space-x-2">
                     <img src={Logo} alt="Logo" className="h-10 w-20" />
-                    <span className="text-lg font-semibold text-gray-800">
+                    <span className="md:text-lg sm:text-sm font-semibold text-gray-800">
                         Professional Cake Making Academy
                     </span>
                 </Link>
