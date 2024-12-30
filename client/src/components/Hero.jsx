@@ -1,21 +1,20 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/router";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, GraduationCap, Timer, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// Import images from assets folder
 import Banner1 from "@/assets/banner1.avif";
 import Banner2 from "@/assets/banner2.avif";
 import Banner3 from "@/assets/banner3.avif";
 
 const Hero = () => {
-  const router = useRouter();
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const slides = useMemo(() => [
     {
-      image: Banner1, // Use imported image here
+      image: Banner1,
       title: "Master the Art of Baking",
       description: "Learn from world-class bakery chefs and start your culinary journey today",
       stats: [
@@ -24,7 +23,7 @@ const Hero = () => {
       ],
     },
     {
-      image: Banner2, // Use imported image here
+      image: Banner2,
       title: "Professional Basic to Advanced Cake Making Courses",
       description: "From basics to advanced techniques, we've got you covered",
       stats: [
@@ -34,7 +33,7 @@ const Hero = () => {
       ],
     },
     {
-      image: Banner3, // Use imported image here
+      image: Banner3,
       title: "Skilled Practitioner",
       description: "Practice with real recipes and get personalized feedback",
       stats: [
@@ -109,7 +108,7 @@ const Hero = () => {
                     <Button
                       size="lg"
                       className="h-12 px-8"
-                      onClick={() => router.push("/courses")}
+                      onClick={() => navigate("/courses")} // Navigate to /courses
                     >
                       Start Learning
                     </Button>
@@ -117,7 +116,7 @@ const Hero = () => {
                       size="lg"
                       variant="outline"
                       className="h-12 px-8"
-                      onClick={() => router.push("/courses")}
+                      onClick={() => navigate("/courses")} // Navigate to /courses
                     >
                       View Courses
                     </Button>
