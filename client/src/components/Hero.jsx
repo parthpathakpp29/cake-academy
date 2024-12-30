@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, GraduationCap, Timer, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
 
 // Import images from assets folder
 import Banner1 from "@/assets/banner1.avif";
@@ -11,21 +10,19 @@ import Banner2 from "@/assets/banner2.avif";
 import Banner3 from "@/assets/banner3.avif";
 
 const Hero = () => {
-  const navigate = useNavigate(); // Initialize the navigate function
-
   const slides = useMemo(() => [
     {
-      image: Banner1,
+      image: Banner1, // Use imported image here
       title: "Master the Art of Baking",
-      description: "Learn from world-class pastry chefs and start your culinary journey today",
+      description: "Learn from world-class bakery chefs and start your culinary journey today",
       stats: [
         { icon: Timer, label: "20+ Courses" },
         { icon: GraduationCap, label: "Expert Instructors" },
       ],
     },
     {
-      image: Banner2,
-      title: "Professional Pastry Courses",
+      image: Banner2, // Use imported image here
+      title: "Professional Basic to Advanced Cake Making Courses",
       description: "From basics to advanced techniques, we've got you covered",
       stats: [
         { icon: Users, label: "24/7 Support" },
@@ -34,8 +31,8 @@ const Hero = () => {
       ],
     },
     {
-      image: Banner3,
-      title: "Hands-on Experience",
+      image: Banner3, // Use imported image here
+      title: "Skilled Practitioner",
       description: "Practice with real recipes and get personalized feedback",
       stats: [
         { icon: Users, label: "Community" },
@@ -90,7 +87,7 @@ const Hero = () => {
                     className="space-y-2"
                   >
                     <span className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary-foreground backdrop-blur-sm">
-                      Welcome to BakeryEdu
+                      Welcome to Professional Cake Making Academy
                     </span>
                     <h1 className="text-4xl font-bold tracking-tighter text-white sm:text-5xl md:text-6xl lg:text-7xl">
                       {slides[currentSlide].title}
@@ -106,19 +103,10 @@ const Hero = () => {
                     transition={{ delay: 0.4, duration: 0.4 }}
                     className="mt-8 flex flex-wrap gap-4"
                   >
-                    <Button
-                      size="lg"
-                      className="h-12 px-8"
-                      onClick={() => navigate("/courses")}
-                    >
+                    <Button size="lg" className="h-12 px-8">
                       Start Learning
                     </Button>
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="h-12 px-8"
-                      onClick={() => navigate("/courses")}
-                    >
+                    <Button size="lg" variant="outline" className="h-12 px-8">
                       View Courses
                     </Button>
                   </motion.div>
