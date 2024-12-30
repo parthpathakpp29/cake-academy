@@ -13,16 +13,7 @@ const Hero = () => {
   const navigate = useNavigate(); // Initialize useNavigate
 
   const slides = useMemo(() => [
-    {
-      image: Banner1,
-      title: "Master the Art of Baking",
-      description: "Learn from world-class bakery chefs and start your culinary journey today",
-      stats: [
-        { icon: Timer, label: "20+ Courses" },
-        { icon: GraduationCap, label: "Expert Instructors" },
-      ],
-    },
-    {
+      {
       image: Banner2,
       title: "Professional Basic to Advanced Cake Making Courses",
       description: "From basics to advanced techniques, we've got you covered",
@@ -30,6 +21,15 @@ const Hero = () => {
         { icon: Users, label: "24/7 Support" },
         { icon: Timer, label: "Flexible Learning" },
         { icon: GraduationCap, label: "Certificate" },
+      ],
+    },
+    {
+      image: Banner1,
+      title: "Master the Art of Baking",
+      description: "Learn from world-class bakery chefs and start your culinary journey today",
+      stats: [
+        { icon: Timer, label: "20+ Courses" },
+        { icon: GraduationCap, label: "Expert Instructors" },
       ],
     },
     {
