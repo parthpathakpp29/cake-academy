@@ -13,8 +13,8 @@ const Hero = () => {
   const navigate = useNavigate(); // Initialize useNavigate
 
   const slides = useMemo(() => [
-      {
-      image: Banner2,
+    {
+      image: Banner2, // Moved Banner2 to the first position
       title: "Professional Basic to Advanced Cake Making Courses",
       description: "From basics to advanced techniques, we've got you covered",
       stats: [
@@ -24,7 +24,7 @@ const Hero = () => {
       ],
     },
     {
-      image: Banner1,
+      image: Banner1, // Moved Banner1 to the second position
       title: "Master the Art of Baking",
       description: "Learn from world-class bakery chefs and start your culinary journey today",
       stats: [
@@ -42,6 +42,7 @@ const Hero = () => {
       ],
     },
   ], []);
+
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
