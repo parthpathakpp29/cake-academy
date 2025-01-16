@@ -4,13 +4,12 @@ import { useAuth } from '@/context/AuthContext';
 
 const ProtectedRoute = () => {
     const { user, token } = useAuth();
-
-    // Optional: Add token validation if needed
+    
     const isTokenValid = () => {
         if (!token) return false;
 
         try {
-            // If you're using JWT, you can decode and check expiration
+          
             const decodedToken = JSON.parse(atob(token.split('.')[1]));
             return decodedToken.exp > Date.now() / 1000;
         } catch (error) {
